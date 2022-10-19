@@ -164,7 +164,7 @@ def get_trips_by_user(user_id):
 
 
 def get_experiences_by_user(user_id):
-
+    pass
 
 
 def pack_trip(trip):
