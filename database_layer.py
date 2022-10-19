@@ -1,4 +1,5 @@
 import psycopg2 as db
+import credentials
 
 # Information on psycopg2 library from
 # https://www.psycopg.org/docs/usage.html#passing-parameters-to-sql-queries
@@ -8,11 +9,11 @@ import psycopg2 as db
 def connect_to_database():
     """Connects to the database associated with the information given in the
     credentials.py file."""
-    connection = db.connect(host="localhost",
-                            database="experiences",
-                            user="postgres",
-                            password="Facepull101",
-                            port=5555)
+    connection = db.connect(host=credentials.host,
+                            database=credentials.database,
+                            user=credentials.user,
+                            password=credentials.password,
+                            port=credentials.port)
 
     cur = connection.cursor()
     return connection, cur
