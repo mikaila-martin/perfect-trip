@@ -1,8 +1,9 @@
-from flask import abort, request
+from flask import Blueprint, abort, request
 from database import *
-from app import app
 import hashlib
 import json
+
+auth_bp = Blueprint("auth", __name__)
 
 
 def hash_password(password):
@@ -11,7 +12,7 @@ def hash_password(password):
     return password_hash.digest().hex()
 
 
-@app.route("/auth/login", methods=["POST"])
+@auth_bp.route("/login", methods=["POST"])
 def login():
     login_info = json.loads(request.data)
     username = login_info["username"]
@@ -30,7 +31,7 @@ def login():
         )
 
 
-@app.route("/auth/register", methods=["POST"])
+@auth_bp.route("/register", methods=["POST"])
 def register():
     registration_info = json.loads(request.data)
     username = registration_info["username"]

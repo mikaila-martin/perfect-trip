@@ -1,10 +1,11 @@
-from flask import abort, request
+from flask import Blueprint, abort, request
 from database import *
-from app import app
 import json
 
+experience_bp = Blueprint("experience", __name__)
 
-@app.route("/search", methods=["POST"])
+
+@experience_bp.route("/search", methods=["POST"])
 def search():
     search_parameters = json.loads(request.data)
     return search_db(
@@ -46,9 +47,9 @@ def pack_experience(experience_data, user_data, review_data):
     return packed_experience
 
 
-@app.route("/experience", methods=["GET", "POST", "PATCH", "DELETE"])
-@app.route("/experience/<exp_id>", methods=["GET", "POST", "PATCH", "DELETE"])
-@app.route("/experience/<exp_id>/<rev_id>", methods=["GET", "POST", "PATCH", "DELETE"])
+@experience_bp.route("/", methods=["GET", "POST", "PATCH", "DELETE"])
+@experience_bp.route("/<exp_id>", methods=["GET", "POST", "PATCH", "DELETE"])
+@experience_bp.route("/<exp_id>/<rev_id>", methods=["GET", "POST", "PATCH", "DELETE"])
 def experience(exp_id=None, rev_id=None):
     if request.method == "GET":
         if exp_id is not None and rev_id is not None:
@@ -150,7 +151,7 @@ def experience(exp_id=None, rev_id=None):
             abort(400)
 
 
-@app.route("/experiences/<user_id>", methods=["GET"])
+@experience_bp.route("/<user_id>", methods=["GET"])
 def get_experiences_by_user(user_id):
     if user_id is not None:
         return get_experiences_by_user(user_id)

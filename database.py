@@ -231,14 +231,14 @@ def delete_review(rev_id):
 
 
 def get_trips_by_user(user_id):
-    connection, cursor = connect_to_database()
-    cursor.execute(
-        f"SELECT tripID, tripName, tripDateRange, note, exp_id, title, description, latitude, longitude, "
-    )
     pass
 
 
 def get_experiences_by_user(user_id):
+    pass
+
+
+def pack_trip(trip):
     pass
 
 

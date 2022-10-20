@@ -1,10 +1,11 @@
-from flask import abort, request
+from flask import Blueprint, abort, request
 from database import *
-from app import app
 import json
 
+trip_bp = Blueprint("trip", __name__)
 
-@app.route("/trip/<trip_id>", methods=["GET", "POST", "PATCH", "DELETE"])
+
+@trip_bp.route("/<trip_id>", methods=["GET", "POST", "PATCH", "DELETE"])
 def trip(trip_id=None):
     if trip_id is None:
         return abort(400)
@@ -33,7 +34,7 @@ def trip(trip_id=None):
         return delete_trip(trip_id)
 
 
-@app.route("/trips/<user_id>", methods=["GET"])
+@trip_bp.route("/<user_id>", methods=["GET"])
 def get_trips_by_user(user_id=None):
     if user_id is not None:
         return get_trips_by_user(user_id)
