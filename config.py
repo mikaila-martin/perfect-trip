@@ -1,6 +1,9 @@
 import os
+from dotenv import load_dotenv
 
-env = os.getenv("PYTHON_ENV")
+load_dotenv()
+
+env = os.getenv("PYTHON_ENV") or "development"
 
 postgres = {
     "production": {

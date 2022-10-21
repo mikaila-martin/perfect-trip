@@ -1,16 +1,23 @@
 from flask import Blueprint, abort, request
+from services.google import places_nearby
 from database import *
 import json
 
 experience_bp = Blueprint("experience", __name__)
 
 
-@experience_bp.route("/search", methods=["POST"])
+@experience_bp.route("/search", methods=["GET"])
 def search():
-    search_parameters = json.loads(request.data)
-    return search_db(
-        search_parameters["location_coords"], search_parameters["keywords"]
-    )
+    lat = request.args.get("lat")
+    lng = request.args.get("lng")
+
+    places = places_nearby(lat, lng)
+
+    return places
+
+    # return search_db(
+    #     search_parameters["location_coords"], search_parameters["keywords"]
+    # )
 
 
 def pack_reviews(review_data):

@@ -15,5 +15,5 @@ pip install -r requirements.txt
 Start the server:
 
 ```python
-flask --app app.py run
+python app.py
 ```
