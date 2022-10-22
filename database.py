@@ -11,11 +11,11 @@ def connect_to_database():
     """Connects to the database associated with the information given in the
     config.py file."""
     connection = db.connect(
-        host=os.getenv("POSTGRES_PROD_HOST"),
-        database=os.getenv("POSTGRES_PROD_DATABASE"),
-        user=os.getenv("POSTGRES_PROD_USER"),
-        password=os.getenv("POSTGRES_PROD_PASSWORD"),
-        port=os.getenv("POSTGRES_PROD_PORT")
+        host=postgres[env]["host"],
+        database=postgres[env]["database"],
+        user=postgres[env]["user"],
+        password=postgres[env]["password"],
+        port=postgres[env]["port"],
     )
 
     cur = connection.cursor()
