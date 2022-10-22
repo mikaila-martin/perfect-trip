@@ -15,7 +15,7 @@ def connect_to_database():
         database=postgres[env]["database"],
         user=postgres[env]["user"],
         password=postgres[env]["password"],
-        port=postgres[env]["port"],
+        port=postgres[env]["port"]
     )
 
     cur = connection.cursor()
