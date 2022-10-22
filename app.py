@@ -4,6 +4,9 @@ from flask_cors import CORS
 # Import config
 from config import env
 
+# Initialize app
+app = Flask(__name__)
+
 # Import blueprints (routes)
 from routes.auth import auth_bp
 from routes.user import user_bp
@@ -12,8 +15,6 @@ from routes.places import places_bp
 from routes.experience import experience_bp
 from routes.pictures import picture_bp
 
-# Initialize app
-app = Flask(__name__)
 
 # Middleware
 CORS(app)

@@ -1,5 +1,6 @@
 import psycopg2 as db
 from config import env, postgres
+import os
 
 # Information on psycopg2 library from
 # https://www.psycopg.org/docs/usage.html#passing-parameters-to-sql-queries
@@ -10,11 +11,11 @@ def connect_to_database():
     """Connects to the database associated with the information given in the
     config.py file."""
     connection = db.connect(
-        host=postgres[env]["host"],
-        database=postgres[env]["database"],
-        user=postgres[env]["user"],
-        password=postgres[env]["password"],
-        port=postgres[env]["port"],
+        host=os.getenv("POSTGRES_PROD_HOST"),
+        database=os.getenv("POSTGRES_PROD_DATABASE"),
+        user=os.getenv("POSTGRES_PROD_USER"),
+        password=os.getenv("POSTGRES_PROD_PASSWORD"),
+        port=os.getenv("POSTGRES_PROD_PORT")
     )
 
     cur = connection.cursor()
@@ -26,7 +27,10 @@ def get_query(query):
     query for the database."""
     connection, cursor = connect_to_database()
     cursor.execute(query)
-    return cursor.fetchall()
+    data = cursor.fetchall()
+    connection.close()
+    cursor.close()
+    return data
 
 
 def send_query(query):
@@ -35,6 +39,8 @@ def send_query(query):
     connection, cursor = connect_to_database()
     cursor.execute(query)
     connection.commit()
+    connection.close()
+    cursor.close()
 
 
 def register_user(username, password_hash, email):
@@ -85,7 +91,13 @@ def get_experience(exp_id):
             f"INNER JOIN pt_schema.users ON users.user_id = reviews.user_id "
             f"WHERE users.user_id = '{experience_data[0][1]}'"
         )
-        return experience_data[0], user_data, review_data
+        keywords = get_query(f"SELECT keywords.keyword from pt_schema.keywords INNER JOIN "
+                             f"pt_schema.experiences_keywords ON "
+                             f"keywords.keyword = experiences_keywords.keyword "
+                             f"INNER JOIN pt_schema.experiences ON "
+                             f"experiences_keywords.exp_id = experiences.exp_id "
+                             f"WHERE experiences.exp_id = {exp_id}")
+        return experience_data[0], user_data, review_data, keywords
 
 
 def make_experience(
@@ -109,15 +121,20 @@ def make_experience(
     send_query(
         f"INSERT INTO pt_schema.experiences (title, description, latitude, longitude, image, "
         f"user_id, exp_start, exp_end, country) VALUES ('{name}', '{description}',"
-        f"'{coords['lat']}','{coords['lon']}','{pictures}','{user_id}','{start}','{end}','{country}');"
+        f"{coords['lat']},{coords['lon']},'{pictures}','{user_id}','{start}','{end}','{country}');"
     )
     experience_id = get_query(
         f"SELECT exp_id FROM pt_schema.experiences "
         f"WHERE experiences.user_id= '{user_id}' "
         f"AND experiences.title = '{name}' "
         f"AND experiences.description = '{description}'"
-    )
-    return get_experience(experience_id[0][0])
+    )[0][0]
+    for keyword in keywords:
+        send_query(
+            f"INSERT INTO pt_schema.experiences_keywords (exp_id, keyword) "
+            f"VALUES ('{experience_id}', '{keyword}')"
+        )
+    return get_experience(experience_id)
 
 
 def update_experience(
@@ -132,10 +149,10 @@ def update_experience(
     start="NULL",
     end="NULL",
 ):
-    user = get_query(
-        f"SELECT user_id from pt_schema.experiences where exp_id = '{exp_id}'"
-    )[0][0]
-    if not user:
+    try:
+        user = get_query(f"SELECT user_id from pt_schema.experiences "
+                         f"where exp_id = '{exp_id}'")[0][0]
+    except KeyError:
         return 1
     if user != user_id:
         return 2
@@ -145,13 +162,14 @@ def update_experience(
         f"image = '{pictures}', user_id = '{user_id}', exp_start = '{start}', "
         f"exp_end = '{end}', country = '{country}' WHERE exp_id = '{exp_id}'"
     )
-    experience_id = get_query(
-        f"SELECT experiences.exp_id FROM pt_schema.experiences "
-        f"WHERE experiences.user_id= '{user_id}' "
-        f"AND experiences.title = '{name}' "
-        f"AND experiences.description = '{description}'"
-    )
-    return get_experience(experience_id[0][0])
+    send_query(f"DELETE FROM pt_schema.experiences_keywords "
+               f"WHERE experiences_keywords.exp_id = '{exp_id}'")
+    for keyword in keywords:
+        send_query(
+            f"INSERT INTO pt_schema.experiences_keywords (exp_id, keyword) "
+            f"VALUES ('{exp_id}', '{keyword}')"
+        )
+    return get_experience(exp_id)
 
 
 def delete_experience(exp_id):
@@ -252,24 +270,65 @@ def get_trips_by_user(user_id):
     pass
 
 
-def pack_trip(trip):
-    pass
-
-
 def get_trip(trip_id):
-    pass
+    trip_data = get_query(
+                f"SELECT trips.trip_id, trips.trip_name, trips.trip_start, trips.trip_end "
+                f"FROM pt_schema.trips WHERE trips.trip_id = '{trip_id}'")
+    itinerary_data = get_query(f"SELECT experiences.exp_id, itineraries.itin_date, itineraries.time"
+                               f" FROM pt_schema.experiences "
+                               f"INNER JOIN pt_schema.itineraries "
+                               f"ON experiences.exp_id = itineraries.exp_id "
+                               f"INNER JOIN pt_schema.trips "
+                               f"ON itineraries.trip_id = trips.trip_id "
+                               f"WHERE trips.trip_id = '{trip_data[0][0]}'")
+    user_data = get_query(f"SELECT users.user_id, users.email, users.username "
+                          f"FROM pt_schema.users "
+                          f"INNER JOIN pt_schema.users_trips "
+                          f"ON users.user_id = users_trips.user_id "
+                          f"INNER JOIN pt_schema.trips "
+                          f"ON users_trips.trip_id = trips.trip_id "
+                          f"WHERE trips.trip_id = '{trip_data[0][0]}'")
+    return trip_data, itinerary_data, user_data
 
 
 def make_trip(name, start_date, end_date, experiences, members):
-    pass
+    send_query(f"INSERT INTO pt_schema.trips (trip_name, trip_start, trip_end) "
+               f"VALUES ('{name}', '{start_date}','{end_date}')")
+    trip_id = get_query(f"SELECT trips.trip_id from pt_schema.trips "
+                        f"WHERE trips.trip_name = '{name}' AND "
+                        f"trips.trip_start = '{start_date}' AND "
+                        f"trips.trip_end = '{end_date}'")[-1][0]
+    for member_id in members:
+        send_query(f"INSERT INTO pt_schema.users_trips (user_id, trip_id) "
+                   f"VALUES ({member_id}, {trip_id})")
+    for experience in experiences:
+        send_query(f"INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time) "
+                   f"VALUES ({trip_id}, {experience['experienceId']}, "
+                   f"'{experience['date']}', '{experience['time']}')")
+    return trip_id
 
 
 def update_trip(trip_id, name, start_date, end_date, experiences, members):
-    pass
+    if not get_query(f"SELECT * from pt_schema.trips WHERE trips.trip_id = {trip_id};"):
+        return 1
+    send_query(f"UPDATE pt_schema.trips SET trip_name = '{name}', "
+               f"trip_start = '{start_date}', trip_end = '{end_date}' "
+               f"WHERE trip_id = {trip_id}")
+    send_query(f"DELETE FROM pt_schema.users_trips WHERE users_trips.trip_id = '{trip_id}'")
+    for member_id in members:
+        send_query(f"INSERT INTO pt_schema.users_trips (user_id, trip_id) "
+                   f"VALUES ({member_id}, {trip_id})")
+    send_query(f"DELETE FROM pt_schema.itineraries WHERE itineraries.trip_id = '{trip_id}'")
+    for experience in experiences:
+        send_query(f"INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time) "
+                   f"VALUES ({trip_id}, {experience['experienceId']}, "
+                   f"'{experience['date']}', '{experience['time']}')")
 
 
 def delete_trip(trip_id):
-    pass
+    if not get_query(f"SELECT * from pt_schema.trips WHERE trips.trip_id = {trip_id};"):
+        return 1
+    send_query(f"DELETE FROM pt_schema.trips WHERE trips.trip_id = {trip_id}")
 
 
 def search_db(location_coords, keywords):
