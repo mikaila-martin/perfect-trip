@@ -1,6 +1,5 @@
 import psycopg2 as db
 from config import env, postgres
-import os
 
 # Information on psycopg2 library from
 # https://www.psycopg.org/docs/usage.html#passing-parameters-to-sql-queries
@@ -266,8 +265,11 @@ def delete_review(rev_id):
         return 0
 
 
-def get_trips_by_user(user_id):
-    pass
+def get_trip_ids_by_user(user_id):
+    ids = get_query(f"SELECT trips.trip_id FROM pt_schema.trips INNER JOIN pt_schema.users_trips "
+                    f"ON trips.trip_id = users_trips.trip_id "
+                    f"WHERE users_trips.user_id = '{user_id}'")
+    return ids
 
 
 def get_trip(trip_id):
@@ -331,5 +333,23 @@ def delete_trip(trip_id):
     send_query(f"DELETE FROM pt_schema.trips WHERE trips.trip_id = {trip_id}")
 
 
-def search_db(location_coords, keywords):
-    pass
+def search_experiences(n, s, e, w, keyword_array):
+    experiences = get_query(f"SELECT experiences.exp_id, experiences_keywords.keyword "
+                            f"FROM pt_schema.experiences "
+                            f"INNER JOIN pt_schema.experiences_keywords "
+                            f"ON experiences.exp_id = experiences_keywords.exp_id "
+                            f"WHERE "
+                            f"experiences.longitude BETWEEN {s} AND {n} AND "
+                            f"experiences.latitude BETWEEN {w} AND {e}")
+    id_array = []
+    exp_array = []
+    for exp in experiences:
+        if exp[1] in keyword_array and exp[0] not in id_array:
+            id_array.append(exp[0])
+    for id in id_array:
+            exp_array.append(get_experience(id))
+    return exp_array
+
+
+def get_keywords():
+    return get_query(f"SELECT * from pt_schema.keywords")
