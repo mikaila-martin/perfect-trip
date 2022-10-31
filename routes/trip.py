@@ -3,6 +3,7 @@ from middleware.auth import validate_token
 import database.experience as experience_entity
 import database.trip as trip_entity
 import json
+from routes import auth
 
 trip_bp = Blueprint("trip", __name__)
 

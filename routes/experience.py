@@ -4,6 +4,7 @@ from middleware.auth import validate_token
 from services.google import places_nearby
 from util import get_country
 import json
+from routes import auth
 
 experience_bp = Blueprint("experience", __name__)
 

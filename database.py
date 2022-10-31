@@ -171,11 +171,14 @@ def update_experience(
     return get_experience(exp_id)
 
 
-def delete_experience(exp_id):
-    if not get_query(
-        f"SELECT * FROM pt_schema.experiences WHERE experiences.exp_id = '{exp_id}';"
-    ):
+def delete_experience(exp_id, token_id):
+    user = get_query(
+        f"SELECT user_id FROM pt_schema.experiences "
+        f"WHERE experiences.exp_id = '{exp_id}';")[0][0]
+    if not user:
         return 1
+    elif int(token_id) != user:
+        return 2
     else:
         send_query(
             f"DELETE FROM pt_schema.experiences WHERE experiences.exp_id = '{exp_id}';"
@@ -253,11 +256,13 @@ def update_review(user_id, rev_id, stars, review_str):
     )
 
 
-def delete_review(rev_id):
-    if not get_query(
-        f"SELECT * FROM pt_schema.reviews WHERE reviews.review_id = '{rev_id}';"
-    ):
+def delete_review(rev_id, token_id):
+    user_id = get_query(f"SELECT reviews.user_id FROM pt_schema.reviews "
+                        f"WHERE reviews.review_id = '{rev_id}';")[0][0]
+    if not user_id:
         return 1
+    if int(token_id) != user_id:
+        return 2
     else:
         send_query(
             f"DELETE FROM pt_schema.reviews WHERE reviews.review_id = '{rev_id}';"
@@ -327,9 +332,17 @@ def update_trip(trip_id, name, start_date, end_date, experiences, members):
                    f"'{experience['date']}', '{experience['time']}')")
 
 
-def delete_trip(trip_id):
-    if not get_query(f"SELECT * from pt_schema.trips WHERE trips.trip_id = {trip_id};"):
+def delete_trip(trip_id, token_id):
+    members = get_query(f"SELECT users_trips.user_id from pt_schema.trips "
+                     f"INNER JOIN pt_schema.users_trips "
+                     f"ON users_trips.trip_id = trips.trip_id "
+                     f"WHERE trips.trip_id = {trip_id};")
+    if not members:
         return 1
+    for i in range(len(members)):
+        members[i] = members[i][0]
+    if int(token_id) not in members:
+        return 2
     send_query(f"DELETE FROM pt_schema.trips WHERE trips.trip_id = {trip_id}")
 
 

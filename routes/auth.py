@@ -7,6 +7,11 @@ import jwt
 
 
 auth_bp = Blueprint("auth", __name__)
+SECRET_KEY = '5649fa3d35bb66267f46b5d0027e67fd'
+
+# Code for jwt authentication from
+# https://www.bacancytechnology.com/blog/flask-jwt-authentication
+# 10/29/2022
 
 
 def hash_password(password):
