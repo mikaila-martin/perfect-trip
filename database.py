@@ -14,7 +14,7 @@ def connect_to_database():
         database=postgres[env]["database"],
         user=postgres[env]["user"],
         password=postgres[env]["password"],
-        port=postgres[env]["port"]
+        port=postgres[env]["port"],
     )
 
     cur = connection.cursor()
@@ -90,12 +90,14 @@ def get_experience(exp_id):
             f"INNER JOIN pt_schema.users ON users.user_id = reviews.user_id "
             f"WHERE users.user_id = '{experience_data[0][1]}'"
         )
-        keywords = get_query(f"SELECT keywords.keyword from pt_schema.keywords INNER JOIN "
-                             f"pt_schema.experiences_keywords ON "
-                             f"keywords.keyword = experiences_keywords.keyword "
-                             f"INNER JOIN pt_schema.experiences ON "
-                             f"experiences_keywords.exp_id = experiences.exp_id "
-                             f"WHERE experiences.exp_id = {exp_id}")
+        keywords = get_query(
+            f"SELECT keywords.keyword from pt_schema.keywords INNER JOIN "
+            f"pt_schema.experiences_keywords ON "
+            f"keywords.keyword = experiences_keywords.keyword "
+            f"INNER JOIN pt_schema.experiences ON "
+            f"experiences_keywords.exp_id = experiences.exp_id "
+            f"WHERE experiences.exp_id = {exp_id}"
+        )
         return experience_data[0], user_data, review_data, keywords
 
 
@@ -149,8 +151,9 @@ def update_experience(
     end="NULL",
 ):
     try:
-        user = get_query(f"SELECT user_id from pt_schema.experiences "
-                         f"where exp_id = '{exp_id}'")[0][0]
+        user = get_query(
+            f"SELECT user_id from pt_schema.experiences " f"where exp_id = '{exp_id}'"
+        )[0][0]
     except KeyError:
         return 1
     if user != user_id:
@@ -161,8 +164,10 @@ def update_experience(
         f"image = '{pictures}', user_id = '{user_id}', exp_start = '{start}', "
         f"exp_end = '{end}', country = '{country}' WHERE exp_id = '{exp_id}'"
     )
-    send_query(f"DELETE FROM pt_schema.experiences_keywords "
-               f"WHERE experiences_keywords.exp_id = '{exp_id}'")
+    send_query(
+        f"DELETE FROM pt_schema.experiences_keywords "
+        f"WHERE experiences_keywords.exp_id = '{exp_id}'"
+    )
     for keyword in keywords:
         send_query(
             f"INSERT INTO pt_schema.experiences_keywords (exp_id, keyword) "
@@ -174,7 +179,8 @@ def update_experience(
 def delete_experience(exp_id, token_id):
     user = get_query(
         f"SELECT user_id FROM pt_schema.experiences "
-        f"WHERE experiences.exp_id = '{exp_id}';")[0][0]
+        f"WHERE experiences.exp_id = '{exp_id}';"
+    )[0][0]
     if not user:
         return 1
     elif int(token_id) != user:
@@ -187,9 +193,11 @@ def delete_experience(exp_id, token_id):
 
 
 def get_experiences_by_location(n, s, e, w):
-    ids = get_query(f"SELECT exp_id FROM pt_schema.experiences WHERE "
-                    f"experiences.longitude BETWEEN {s} AND {n} AND "
-                    f"experiences.latitude BETWEEN {w} AND {e}")
+    ids = get_query(
+        f"SELECT exp_id FROM pt_schema.experiences WHERE "
+        f"experiences.longitude BETWEEN {s} AND {n} AND "
+        f"experiences.latitude BETWEEN {w} AND {e}"
+    )
     exp_array = []
     for exp_id in ids:
         exp_array.append(get_experience(exp_id[0]))
@@ -197,7 +205,9 @@ def get_experiences_by_location(n, s, e, w):
 
 
 def get_experiences_by_user(user_id):
-    ids = get_query(f"SELECT exp_id FROM pt_schema.experiences WHERE user_id = '{user_id}'")
+    ids = get_query(
+        f"SELECT exp_id FROM pt_schema.experiences WHERE user_id = '{user_id}'"
+    )
     exp_array = []
     for exp_id in ids:
         exp_array.append(get_experience(exp_id[0]))
@@ -257,8 +267,10 @@ def update_review(user_id, rev_id, stars, review_str):
 
 
 def delete_review(rev_id, token_id):
-    user_id = get_query(f"SELECT reviews.user_id FROM pt_schema.reviews "
-                        f"WHERE reviews.review_id = '{rev_id}';")[0][0]
+    user_id = get_query(
+        f"SELECT reviews.user_id FROM pt_schema.reviews "
+        f"WHERE reviews.review_id = '{rev_id}';"
+    )[0][0]
     if not user_id:
         return 1
     if int(token_id) != user_id:
@@ -271,72 +283,99 @@ def delete_review(rev_id, token_id):
 
 
 def get_trip_ids_by_user(user_id):
-    ids = get_query(f"SELECT trips.trip_id FROM pt_schema.trips INNER JOIN pt_schema.users_trips "
-                    f"ON trips.trip_id = users_trips.trip_id "
-                    f"WHERE users_trips.user_id = '{user_id}'")
+    ids = get_query(
+        f"SELECT trips.trip_id FROM pt_schema.trips INNER JOIN pt_schema.users_trips "
+        f"ON trips.trip_id = users_trips.trip_id "
+        f"WHERE users_trips.user_id = '{user_id}'"
+    )
     return ids
 
 
 def get_trip(trip_id):
     trip_data = get_query(
-                f"SELECT trips.trip_id, trips.trip_name, trips.trip_start, trips.trip_end "
-                f"FROM pt_schema.trips WHERE trips.trip_id = '{trip_id}'")
-    itinerary_data = get_query(f"SELECT experiences.exp_id, itineraries.itin_date, itineraries.time"
-                               f" FROM pt_schema.experiences "
-                               f"INNER JOIN pt_schema.itineraries "
-                               f"ON experiences.exp_id = itineraries.exp_id "
-                               f"INNER JOIN pt_schema.trips "
-                               f"ON itineraries.trip_id = trips.trip_id "
-                               f"WHERE trips.trip_id = '{trip_data[0][0]}'")
-    user_data = get_query(f"SELECT users.user_id, users.email, users.username "
-                          f"FROM pt_schema.users "
-                          f"INNER JOIN pt_schema.users_trips "
-                          f"ON users.user_id = users_trips.user_id "
-                          f"INNER JOIN pt_schema.trips "
-                          f"ON users_trips.trip_id = trips.trip_id "
-                          f"WHERE trips.trip_id = '{trip_data[0][0]}'")
+        f"SELECT trips.trip_id, trips.trip_name, trips.trip_start, trips.trip_end "
+        f"FROM pt_schema.trips WHERE trips.trip_id = '{trip_id}'"
+    )
+    itinerary_data = get_query(
+        f"SELECT experiences.exp_id, itineraries.itin_date, itineraries.time"
+        f" FROM pt_schema.experiences "
+        f"INNER JOIN pt_schema.itineraries "
+        f"ON experiences.exp_id = itineraries.exp_id "
+        f"INNER JOIN pt_schema.trips "
+        f"ON itineraries.trip_id = trips.trip_id "
+        f"WHERE trips.trip_id = '{trip_data[0][0]}'"
+    )
+    user_data = get_query(
+        f"SELECT users.user_id, users.email, users.username "
+        f"FROM pt_schema.users "
+        f"INNER JOIN pt_schema.users_trips "
+        f"ON users.user_id = users_trips.user_id "
+        f"INNER JOIN pt_schema.trips "
+        f"ON users_trips.trip_id = trips.trip_id "
+        f"WHERE trips.trip_id = '{trip_data[0][0]}'"
+    )
     return trip_data, itinerary_data, user_data
 
 
 def make_trip(name, start_date, end_date, experiences, members):
-    send_query(f"INSERT INTO pt_schema.trips (trip_name, trip_start, trip_end) "
-               f"VALUES ('{name}', '{start_date}','{end_date}')")
-    trip_id = get_query(f"SELECT trips.trip_id from pt_schema.trips "
-                        f"WHERE trips.trip_name = '{name}' AND "
-                        f"trips.trip_start = '{start_date}' AND "
-                        f"trips.trip_end = '{end_date}'")[-1][0]
+    send_query(
+        f"INSERT INTO pt_schema.trips (trip_name, trip_start, trip_end) "
+        f"VALUES ('{name}', '{start_date}','{end_date}')"
+    )
+    trip_id = get_query(
+        f"SELECT trips.trip_id from pt_schema.trips "
+        f"WHERE trips.trip_name = '{name}' AND "
+        f"trips.trip_start = '{start_date}' AND "
+        f"trips.trip_end = '{end_date}'"
+    )[-1][0]
     for member_id in members:
-        send_query(f"INSERT INTO pt_schema.users_trips (user_id, trip_id) "
-                   f"VALUES ({member_id}, {trip_id})")
+        send_query(
+            f"INSERT INTO pt_schema.users_trips (user_id, trip_id) "
+            f"VALUES ({member_id}, {trip_id})"
+        )
     for experience in experiences:
-        send_query(f"INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time) "
-                   f"VALUES ({trip_id}, {experience['experienceId']}, "
-                   f"'{experience['date']}', '{experience['time']}')")
+        send_query(
+            f"INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time) "
+            f"VALUES ({trip_id}, {experience['experienceId']}, "
+            f"'{experience['date']}', '{experience['time']}')"
+        )
     return trip_id
 
 
 def update_trip(trip_id, name, start_date, end_date, experiences, members):
     if not get_query(f"SELECT * from pt_schema.trips WHERE trips.trip_id = {trip_id};"):
         return 1
-    send_query(f"UPDATE pt_schema.trips SET trip_name = '{name}', "
-               f"trip_start = '{start_date}', trip_end = '{end_date}' "
-               f"WHERE trip_id = {trip_id}")
-    send_query(f"DELETE FROM pt_schema.users_trips WHERE users_trips.trip_id = '{trip_id}'")
+    send_query(
+        f"UPDATE pt_schema.trips SET trip_name = '{name}', "
+        f"trip_start = '{start_date}', trip_end = '{end_date}' "
+        f"WHERE trip_id = {trip_id}"
+    )
+    send_query(
+        f"DELETE FROM pt_schema.users_trips WHERE users_trips.trip_id = '{trip_id}'"
+    )
     for member_id in members:
-        send_query(f"INSERT INTO pt_schema.users_trips (user_id, trip_id) "
-                   f"VALUES ({member_id}, {trip_id})")
-    send_query(f"DELETE FROM pt_schema.itineraries WHERE itineraries.trip_id = '{trip_id}'")
+        send_query(
+            f"INSERT INTO pt_schema.users_trips (user_id, trip_id) "
+            f"VALUES ({member_id}, {trip_id})"
+        )
+    send_query(
+        f"DELETE FROM pt_schema.itineraries WHERE itineraries.trip_id = '{trip_id}'"
+    )
     for experience in experiences:
-        send_query(f"INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time) "
-                   f"VALUES ({trip_id}, {experience['experienceId']}, "
-                   f"'{experience['date']}', '{experience['time']}')")
+        send_query(
+            f"INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time) "
+            f"VALUES ({trip_id}, {experience['experienceId']}, "
+            f"'{experience['date']}', '{experience['time']}')"
+        )
 
 
 def delete_trip(trip_id, token_id):
-    members = get_query(f"SELECT users_trips.user_id from pt_schema.trips "
-                     f"INNER JOIN pt_schema.users_trips "
-                     f"ON users_trips.trip_id = trips.trip_id "
-                     f"WHERE trips.trip_id = {trip_id};")
+    members = get_query(
+        f"SELECT users_trips.user_id from pt_schema.trips "
+        f"INNER JOIN pt_schema.users_trips "
+        f"ON users_trips.trip_id = trips.trip_id "
+        f"WHERE trips.trip_id = {trip_id};"
+    )
     if not members:
         return 1
     for i in range(len(members)):
@@ -347,20 +386,23 @@ def delete_trip(trip_id, token_id):
 
 
 def search_experiences(n, s, e, w, keyword_array):
-    experiences = get_query(f"SELECT experiences.exp_id, experiences_keywords.keyword "
-                            f"FROM pt_schema.experiences "
-                            f"INNER JOIN pt_schema.experiences_keywords "
-                            f"ON experiences.exp_id = experiences_keywords.exp_id "
-                            f"WHERE "
-                            f"experiences.longitude BETWEEN {s} AND {n} AND "
-                            f"experiences.latitude BETWEEN {w} AND {e}")
+
+    experiences = get_query(
+        f"SELECT experiences.exp_id, experiences_keywords.keyword "
+        f"FROM pt_schema.experiences "
+        f"INNER JOIN pt_schema.experiences_keywords "
+        f"ON experiences.exp_id = experiences_keywords.exp_id "
+        f"WHERE "
+        f"experiences.longitude BETWEEN {s} AND {n} AND "
+        f"experiences.latitude BETWEEN {w} AND {e}"
+    )
     id_array = []
     exp_array = []
     for exp in experiences:
         if exp[1] in keyword_array and exp[0] not in id_array:
             id_array.append(exp[0])
     for id in id_array:
-            exp_array.append(get_experience(id))
+        exp_array.append(get_experience(id))
     return exp_array
 
 

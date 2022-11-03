@@ -15,6 +15,8 @@ from routes.places import places_bp
 from routes.experience import experience_bp
 from routes.pictures import picture_bp
 
+# Initialize app
+app = Flask(__name__)
 
 # Middleware
 CORS(app)
