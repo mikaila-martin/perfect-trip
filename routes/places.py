@@ -8,4 +8,4 @@ places_bp = Blueprint("places", __name__)
 def get_places():
     query = request.args.get("query")
     places = places_autocomplete(query)
-    return places
+    return {"places": places}
