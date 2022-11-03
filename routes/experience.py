@@ -8,16 +8,27 @@ experience_bp = Blueprint("experience", __name__)
 
 @experience_bp.route("/search", methods=["GET"])
 def search():
-    lat = request.args.get("lat")
-    lng = request.args.get("lng")
 
-    places = places_nearby(lat, lng)
+    # Keywords
+    keywords = request.args.get("keywords")
+    keywords = [] if keywords == "" else keywords.split(",")
+
+    # Map center
+    c_lat = request.args.get("c_lat")
+    c_lng = request.args.get("c_lng")
+
+    # Get nearby places
+    places = places_nearby(c_lat, c_lng, keywords)
+
+    # Map bounding box
+    ne_lat = request.args.get("ne_lat")
+    ne_lng = request.args.get("ne_lng")
+    sw_lat = request.args.get("sw_lat")
+    sw_lng = request.args.get("sw_lng")
+
+    # TODO: Get all experiences that fall within bounding box
 
     return places
-
-    # return search_db(
-    #     search_parameters["location_coords"], search_parameters["keywords"]
-    # )
 
 
 def pack_reviews(review_data):
