@@ -52,7 +52,7 @@ def register_user(username, password_hash, email):
         )
         user_id, username, avatar = get_query(
             f"SELECT user_id, username, avatar FROM pt_schema.users WHERE email = '{email}';"
-        )[0][0]
+        )[0]
         return user_id, username, avatar
 
 
