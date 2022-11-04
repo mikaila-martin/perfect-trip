@@ -22,14 +22,16 @@ def hash_password(password):
 @auth_bp.route("/login", methods=["POST"])
 def login():
     login_info = json.loads(request.data)
-    username = login_info["username"]
+    email = login_info["email"]
     password = login_info["password"]
     password_hash = hash_password(password)
-    login_response = login_user(username, password_hash)
+    print(password_hash)
+    login_response = login_user(email, password_hash)
     if login_response == 1:
-        abort(403)
+        return "Email or password incorrect", 400
     else:
-        return jwt.encode(
+        print(login_response)
+        token = jwt.encode(
             {
                 "userId": login_response[0],
                 "username": login_response[1],
@@ -38,23 +40,25 @@ def login():
             SECRET_KEY,
             "HS256",
         )
+        return json.dumps({"token": token})
 
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
     registration_info = json.loads(request.data)
+    print(registration_info)
     username = registration_info["username"]
     password_a = registration_info["passwordA"]
     password_b = registration_info["passwordB"]
     email = registration_info["email"]
     if password_b != password_a:
-        return "PASSWORDS NOT EQUAL"
+        return "Passwords not equal", 400
     else:
         password_hash = hash_password(password_b)
         registration_response = register_user(username, password_hash, email)
         if registration_response == 1:
-            return "EMAIL IN USE"
-        return jwt.encode(
+            return "Email in use", 400
+        token = jwt.encode(
             {
                 "userId": registration_response[0],
                 "username": registration_response[1],
@@ -63,6 +67,7 @@ def register():
             SECRET_KEY,
             "HS256",
         )
+        return json.dumps({"token": token})
 
 
 def token_required(f):
