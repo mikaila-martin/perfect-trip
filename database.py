@@ -50,10 +50,10 @@ def register_user(username, password_hash, email):
             "INSERT INTO pt_schema.users (username, password, email) "
             f"VALUES ('{username}', '{password_hash}', '{email}');"
         )
-        user_id = get_query(
-            f"SELECT users.user_id FROM pt_schema.users WHERE email = '{email}';"
+        user_id, username, avatar = get_query(
+            f"SELECT user_id, username, avatar FROM pt_schema.users WHERE email = '{email}';"
         )[0][0]
-        return user_id, email, username
+        return user_id, username, avatar
 
 
 def login_user(email, password):
@@ -63,10 +63,10 @@ def login_user(email, password):
     ):
         return 1
     else:
-        user_id, username = get_query(
-            f"SELECT user_id, username FROM pt_schema.users WHERE email = '{email}'"
+        user_id, username, avatar = get_query(
+            f"SELECT user_id, username, avatar FROM pt_schema.users WHERE email = '{email}'"
         )[0]
-        return user_id, email, username
+        return user_id, username, avatar
 
 
 def get_experience(exp_id):
