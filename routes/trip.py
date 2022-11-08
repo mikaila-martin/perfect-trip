@@ -1,62 +1,18 @@
 from flask import Blueprint, abort, request
+import database.experience as experience_service
+import database.trip as trip_service
+from util import pack_experience
 from middleware.auth import validate_token
-import database.experience as experience_entity
-import database.trip as trip_entity
 import json
 
 trip_bp = Blueprint("trip", __name__)
 
 
-def pack_reviews(review_data):
-    review_list = []
-    for tup in review_data:
-        review = {
-            "reviewId": tup[0],
-            "rating": tup[1],
-            "comment": tup[2],
-            "user": {"userId": tup[3], "username": tup[4], "avatar": tup[5]},
-        }
-        review_list.append(review)
-    return review_list
-
-
-def pack_keywords(keywords):
-    keywords_list = []
-    for tup in keywords:
-        keywords_list.append(tup[0])
-    return keywords_list
-
-
-def pack_experience(experience_data, user_data, review_data, keywords):
-    review_list = pack_reviews(review_data)
-    keywords_list = pack_keywords(keywords)
-    packed_experience = {
-        "experienceId": experience_data[0],
-        "name": experience_data[2],
-        "description": experience_data[3],
-        "keywords": keywords_list,
-        "coordinates": {
-            "lat": float(experience_data[4]),
-            "lon": float(experience_data[5]),
-        },
-        "dates": {"start": str(experience_data[6]), "end": str(experience_data[7])},
-        "images": experience_data[8],
-        "country": experience_data[9],
-        "creator": {
-            "userId": user_data[0],
-            "username": user_data[1],
-            "avatar": user_data[2],
-        },
-        "reviews": review_list,
-    }
-    return packed_experience
-
-
 def get_and_pack_trip(trip_id):
-    itin_data, exp_data, user_data = trip_entity.get_trip(trip_id)
+    itin_data, exp_data, user_data = trip_service.get_trip(trip_id)
     experiences_table = []
     for experience in exp_data:
-        exp_info = experience_entity.get_experience(experience[0])
+        exp_info = experience_service.get_experience(experience[0])
         packed_experience = pack_experience(
             exp_info[0], exp_info[1], exp_info[2], exp_info[3]
         )
@@ -98,7 +54,7 @@ def trip(token_id, trip_id=None):
             abort(401)
         if int(token_id) not in trip_data["members"]:
             abort(403)
-        trip_id = trip_entity.create_trip(
+        trip_id = trip_service.create_trip(
             name=trip_data["name"],
             start_date=trip_data["startDate"],
             end_date=trip_data["endDate"],
@@ -115,7 +71,7 @@ def trip(token_id, trip_id=None):
         if int(token_id) not in trip_data["members"]:
             abort(403)
         if (
-            trip_entity.update_trip(
+            trip_service.update_trip(
                 trip_id=trip_id,
                 name=trip_data["name"],
                 start_date=trip_data["startDate"],
@@ -130,7 +86,7 @@ def trip(token_id, trip_id=None):
     elif request.method == "DELETE":
         if trip_id is None:
             abort(400)
-        response = trip_entity.delete_trip(trip_id, token_id)
+        response = trip_service.delete_trip(trip_id, token_id)
         if response == 1:
             abort(404)
         elif response == 2:
@@ -145,7 +101,7 @@ def get_trips_by_user(token_id, user_id=None):
         if user_id != token_id:
             abort(403)
         trip_array = []
-        ids = trip_entity.get_trip_ids_by_user(user_id)
+        ids = trip_service.get_trip_ids_by_user(user_id)
         for id in ids:
             trip_array.append(get_and_pack_trip(id[0]))
         return json.dumps({"trips": trip_array})

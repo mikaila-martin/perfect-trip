@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, request, Response
+from flask import Blueprint, request, Response
 import database.experience as experience_service
 from middleware.auth import validate_token
 from services.google import places_nearby
@@ -8,7 +8,11 @@ import json
 experience_bp = Blueprint("experience", __name__)
 
 # PLACEHOLDER IMAGES
-images = "https://via.placeholder.com/150/0000FF/FFFFFF?Text=PHOTO_1,https://via.placeholder.com/150/0000FF/FFFFFF?Text=PHOTO_2,https://via.placeholder.com/150/0000FF/FFFFFF?Text=PHOTO_3"
+images = """
+https://via.placeholder.com/150/404040/FFFFFF?Text=PHOTO_1,
+https://via.placeholder.com/150/404040/FFFFFF?Text=PHOTO_2,
+https://via.placeholder.com/150/404040/FFFFFF?Text=PHOTO_3
+"""
 
 
 @experience_bp.route("/search", methods=["GET"])
@@ -33,10 +37,10 @@ def search():
 
     # Get experiences from database
     experiences = experience_service.search_experiences(
-        ne_lat, sw_lat, ne_lng, sw_lng, keywords
+        ne_lat, ne_lng, sw_lat, sw_lng, keywords
     )
 
-    return json.dumps({"experiences": places})
+    return Response(json.dumps({"experiences": places + experiences}), status=200)
 
 
 @experience_bp.route("/<exp_id>", methods=["GET"])
@@ -90,8 +94,8 @@ def create_experience(user_id):
                 "keywords": data["keywords"],
                 "latitude": data["latitude"],
                 "longitude": data["longitude"],
-                "exp_start": data["exp_start"],
-                "exp_end": data["exp_end"],
+                "exp_start": data["start"],
+                "exp_end": data["end"],
                 "images": images,
                 "country": country,
             }
@@ -126,8 +130,8 @@ def update_experience(user_id, exp_id):
                 "keywords": data["keywords"],
                 "latitude": data["latitude"],
                 "longitude": data["longitude"],
-                "exp_start": data["exp_start"],
-                "exp_end": data["exp_end"],
+                "exp_start": data["start"],
+                "exp_end": data["end"],
                 "images": images,
                 "country": country,
             }
@@ -147,7 +151,7 @@ def delete_experience(user_id, exp_id):
     # Delete experience
     try:
 
-        experience_service.delete_experience(user_id, exp_id)
+        experience_service.delete_experience(exp_id)
         return Response(json.dumps({"exp_id": exp_id}), status=200)
 
     # Handle exception

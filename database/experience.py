@@ -1,31 +1,11 @@
-from database.config import get_query, send_query
+from database.config import query_one, query_many, mutation
 from util import pack_experience
-
-
-def search_experiences(n, s, e, w, keyword_array):
-    experiences = get_query(
-        f"SELECT experiences.exp_id, experiences_keywords.keyword "
-        f"FROM pt_schema.experiences "
-        f"INNER JOIN pt_schema.experiences_keywords "
-        f"ON experiences.exp_id = experiences_keywords.exp_id "
-        f"WHERE "
-        f"experiences.longitude BETWEEN {s} AND {n} AND "
-        f"experiences.latitude BETWEEN {w} AND {e}"
-    )
-    id_array = []
-    exp_array = []
-    for exp in experiences:
-        if exp[1] in keyword_array and exp[0] not in id_array:
-            id_array.append(exp[0])
-    for id in id_array:
-        exp_array.append(get_experience_by_id(id))
-    return exp_array
 
 
 def get_experience_by_id(exp_id):
 
     # Get experience
-    experience = get_query(
+    experience = query_one(
         """
         SELECT experiences.exp_id, experiences.user_id, experiences.title, 
         experiences.description, experiences.latitude, experiences.longitude, 
@@ -39,31 +19,28 @@ def get_experience_by_id(exp_id):
     if experience is None:
         raise Exception("Experience not found.")
 
-    experience = experience[0]
-    user_id = experience["user_id"]
-
     # Get user
-    user = get_query(
+    user = query_one(
         """
         SELECT users.user_id, users.username, users.avatar from pt_schema.users 
         WHERE users.user_id = %s
         """,
-        (user_id,),
-    )[0]
+        (experience["user_id"],),
+    )
 
     # Get reviews
-    reviews = get_query(
+    reviews = query_many(
         """
         SELECT reviews.review_id, reviews.rev_rating, reviews.comment, 
         reviews.user_id, users.email, users.username FROM pt_schema.reviews 
         INNER JOIN pt_schema.users ON users.user_id = reviews.user_id 
         WHERE users.user_id = %s
         """,
-        (user_id,),
+        (experience["user_id"],),
     )
 
     # Get keywords
-    keywords = get_query(
+    keywords = query_many(
         """
         SELECT keywords.keyword from pt_schema.keywords INNER JOIN 
         pt_schema.experiences_keywords ON 
@@ -78,10 +55,43 @@ def get_experience_by_id(exp_id):
     return pack_experience(experience, user, reviews, keywords)
 
 
+def search_experiences(ne_lat, ne_lng, sw_lat, sw_lng, keywords):
+
+    # Get experiences
+    experiences = query_many(
+        """
+        SELECT experiences.exp_id, experiences_keywords.keyword 
+        FROM pt_schema.experiences 
+        INNER JOIN pt_schema.experiences_keywords 
+        ON experiences.exp_id = experiences_keywords.exp_id 
+        WHERE experiences.longitude BETWEEN %s AND %s
+        AND experiences.latitude BETWEEN %s AND %s
+        """,
+        (ne_lng, sw_lng, ne_lat, sw_lat),
+    )
+
+    # Filter experiences by keywords
+    searched_experiences = []
+
+    for experience in experiences:
+
+        keyword_match = False
+
+        for keyword in experience["keywords"]:
+            if keyword in keywords:
+                keyword_match = True
+                break
+
+        if keyword_match:
+            searched_experiences.append(get_experience_by_id(experience["exp_id"]))
+
+    return searched_experiences
+
+
 def get_experiences_by_user_id(user_id):
 
     # Get experience id's
-    experiences = get_query(
+    experiences = query_many(
         """
         SELECT exp_id FROM pt_schema.experiences WHERE user_id = %s
         """,
@@ -100,7 +110,7 @@ def get_experiences_by_user_id(user_id):
 def create_experience(experience):
 
     # Check to see if the experience already exists
-    existing_experience = get_query(
+    existing_experience = query_one(
         """
         SELECT exp_id FROM pt_schema.experiences
         WHERE experiences.user_id = %s
@@ -114,7 +124,7 @@ def create_experience(experience):
         raise Exception("Experience already exists.")
 
     # Create the experience
-    send_query(
+    mutation(
         """
         INSERT INTO pt_schema.experiences (user_id, title, description, latitude,
         longitude, country, image, exp_start, exp_end)
@@ -134,7 +144,7 @@ def create_experience(experience):
     )
 
     # Fetch the experience id
-    exp_id = get_query(
+    exp_id = query_one(
         """
         SELECT exp_id FROM pt_schema.experiences
         WHERE experiences.user_id = %s 
@@ -146,11 +156,11 @@ def create_experience(experience):
             experience["title"],
             experience["description"],
         ),
-    )[0]["exp_id"]
+    )["exp_id"]
 
     # Create the experience keywords
     for keyword in experience["keywords"]:
-        send_query(
+        mutation(
             """
             INSERT INTO pt_schema.experiences_keywords (exp_id, keyword)
             VALUES (%s, %s)
@@ -165,19 +175,19 @@ def create_experience(experience):
 def update_experience(experience):
 
     # Check to see if the experience already exists
-    existing_experience = get_query(
+    existing_experience = query_one(
         """
         SELECT exp_id FROM pt_schema.experiences
         WHERE experiences.exp_id = %s
         """,
-        (experience["exp_id"]),
+        (experience["exp_id"],),
     )
 
     if existing_experience is None:
         raise Exception("Experience not found.")
 
     # Update the experience
-    send_query(
+    mutation(
         """
         UPDATE pt_schema.experiences SET title = %s, description = %s, 
         latitude = %s, longitude = %s, image = %s, user_id = %s, 
@@ -198,7 +208,7 @@ def update_experience(experience):
     )
 
     # Overwrite keywords
-    send_query(
+    mutation(
         """
         DELETE FROM pt_schema.experiences_keywords 
         WHERE experiences_keywords.exp_id = %s
@@ -206,8 +216,8 @@ def update_experience(experience):
         (experience["exp_id"],),
     )
 
-    for keyword in (experience["keywords"],):
-        send_query(
+    for keyword in experience["keywords"]:
+        mutation(
             """
             INSERT INTO pt_schema.experiences_keywords (exp_id, keyword) 
             VALUES (%s, %s)
@@ -218,22 +228,22 @@ def update_experience(experience):
     return get_experience_by_id(experience["exp_id"])
 
 
-def delete_experience(user_id, exp_id):
+def delete_experience(exp_id):
 
     # Check to see if the experience already exists
-    existing_experience = get_query(
+    existing_experience = query_one(
         """
         SELECT user_id FROM pt_schema.experiences 
         WHERE experiences.exp_id = %s
         """,
-        exp_id,
+        (exp_id,),
     )
 
     if existing_experience is None:
         raise Exception("Experience not found.")
 
     # Delete the experience
-    send_query(
+    mutation(
         """
         DELETE FROM pt_schema.experiences WHERE experiences.exp_id = %s;
         """,

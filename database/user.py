@@ -1,16 +1,15 @@
-from database.config import get_query
+from database.config import query_one
 
 
-def get_by_id(user_id):
-    user = get_query(
+def get_user_by_id(user_id):
+    user = query_one(
         """
         SELECT * FROM pt_schema.users WHERE users.user_id = %s
         """,
         (user_id,),
     )
 
-    if user:
-        return user[0]
-
-    else:
+    if user is None:
         raise Exception("User not found.")
+
+    return user

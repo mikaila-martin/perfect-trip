@@ -1,70 +1,109 @@
-from database.config import get_query, send_query
+from database.config import query, mutation
 from util import pack_reviews
 
 
-def get_review(rev_id):
-    response = get_query(
-        f"SELECT reviews.review_id, reviews.rev_rating, reviews.comment, "
-        f"reviews.user_id, users.email, users.username FROM pt_schema.reviews "
-        f"INNER JOIN pt_schema.users ON reviews.user_id = users.user_id "
-        f"WHERE reviews.review_id = '{rev_id}';"
-    )
-    if not response:
-        return 1
-    else:
-        return response
+def get_review_by_id(review_id):
 
-
-def create_review(user_id, exp_id, stars, review_str):
-    if get_query(
-        f"SELECT * FROM pt_schema.reviews WHERE reviews.user_id = '{user_id}' AND "
-        f"reviews.exp_id = '{exp_id}';"
-    ):
-        return 1
-    send_query(
-        f"INSERT INTO pt_schema.reviews (user_id, exp_id, rev_rating, comment) "
-        f"VALUES ('{user_id}', '{exp_id}', '{stars}', '{review_str}');"
-    )
-    return get_query(
-        f"SELECT reviews.review_id, reviews.rev_rating, reviews.comment, "
-        f"reviews.user_id, users.email, users.username FROM pt_schema.reviews "
-        f"INNER JOIN pt_schema.users ON reviews.user_id = users.user_id "
-        f"WHERE reviews.user_id = '{user_id}' AND reviews.exp_id = '{exp_id}';"
+    review = query(
+        """
+        SELECT reviews.review_id, reviews.rev_rating, reviews.comment, 
+        reviews.user_id, users.email, users.username FROM pt_schema.reviews 
+        INNER JOIN pt_schema.users ON reviews.user_id = users.user_id 
+        WHERE reviews.review_id = %s;
+        """,
+        (review_id,),
     )
 
+    if review is None:
+        raise Exception("Review not found.")
 
-def update_review(user_id, rev_id, stars, review_str):
-    current = get_query(
-        f"SELECT reviews.user_id FROM "
-        f"pt_schema.reviews WHERE reviews.review_id = '{rev_id}';"
-    )
-    if not current:
-        return 1
-    if current[0][0] != user_id:
-        return 2
-    send_query(
-        f"UPDATE pt_schema.reviews SET rev_rating = '{stars}', "
-        f"comment = '{review_str}' WHERE reviews.review_id = '{rev_id}';"
-    )
-    return get_query(
-        f"SELECT reviews.review_id, reviews.rev_rating, reviews.comment, "
-        f"reviews.user_id, users.email, users.username FROM pt_schema.reviews "
-        f"INNER JOIN pt_schema.users ON reviews.user_id = users.user_id "
-        f"WHERE reviews.review_id = '{rev_id}';"
-    )
+    return pack_reviews([review])[0]
 
 
-def delete_review(rev_id, token_id):
-    user_id = get_query(
-        f"SELECT reviews.user_id FROM pt_schema.reviews "
-        f"WHERE reviews.review_id = '{rev_id}';"
-    )[0][0]
-    if not user_id:
-        return 1
-    if int(token_id) != user_id:
-        return 2
-    else:
-        send_query(
-            f"DELETE FROM pt_schema.reviews WHERE reviews.review_id = '{rev_id}';"
-        )
-        return 0
+def create_review(review):
+
+    existing_review = query(
+        """
+        SELECT reviews.review_id FROM pt_schema.reviews 
+        WHERE reviews.user_id = %s AND reviews.exp_id = %s
+        """,
+        (review["user_id"], review["exp_id"]),
+    )
+
+    if existing_review:
+        raise Exception("Only one review per experience allowed.")
+
+    mutation(
+        """
+        INSERT INTO pt_schema.reviews (user_id, exp_id, rev_rating, comment) 
+        VALUES (%s, %s, %s, %s);
+        """,
+        (review["user_id"], review["exp_id"], review["rating"], review["comment"]),
+    )
+
+    review = query(
+        """
+        SELECT reviews.review_id, reviews.rev_rating, reviews.comment, 
+        reviews.user_id, users.email, users.username FROM pt_schema.reviews 
+        INNER JOIN pt_schema.users ON reviews.user_id = users.user_id 
+        WHERE reviews.user_id = %s AND reviews.exp_id = %s;
+        """,
+        (review["user_id"], review["exp_id"]),
+    )
+
+    return pack_reviews([review])[0]
+
+
+def update_review(review):
+
+    existing_review = query(
+        """
+        SELECT reviews.review_id FROM pt_schema.reviews 
+        WHERE reviews.review_id = %s;
+        """,
+        (review["review_id"],),
+    )
+
+    if existing_review is None:
+        raise Exception("Review not found.")
+
+    mutation(
+        """
+        UPDATE pt_schema.reviews SET rev_rating = %s, comment = %s 
+        WHERE reviews.review_id = %s;
+        """,
+        (review["rating"], review["comment"], review["review_id"]),
+    )
+
+    review = query(
+        """
+        SELECT reviews.review_id, reviews.rev_rating, reviews.comment, 
+        reviews.user_id, users.email, users.username FROM pt_schema.reviews 
+        INNER JOIN pt_schema.users ON reviews.user_id = users.user_id 
+        WHERE reviews.review_id = %s;
+        """,
+        (review["review_id"],),
+    )
+
+    return pack_reviews([review])[0]
+
+
+def delete_review(review_id):
+
+    existing_review = query(
+        """
+        SELECT reviews.review_id FROM pt_schema.reviews 
+        WHERE reviews.review_id = %s;
+        """,
+        (review_id,),
+    )
+
+    if existing_review is None:
+        raise Exception("Review not found.")
+
+    mutation(
+        """
+        DELETE FROM pt_schema.reviews WHERE reviews.review_id = %s;
+        """,
+        (review_id,),
+    )

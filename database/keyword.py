@@ -1,7 +1,7 @@
-from database.config import get_query
+from database.config import query
 from util import pack_keywords
 
 
 def get_keywords():
-    keywords = get_query(f"SELECT * from pt_schema.keywords")
+    keywords = query(f"SELECT * from pt_schema.keywords")
     return pack_keywords(keywords)

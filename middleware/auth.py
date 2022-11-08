@@ -1,7 +1,8 @@
-from flask import request
+from flask import request, Response
 from config import jwt_secret_key
-import database.user as user_entity
+import database.user as user_service
 from functools import wraps
+import json
 import jwt
 
 
@@ -17,16 +18,16 @@ def validate_token(f):
 
         # Return error message on missing token
         if not token:
-            return "token is missing", 400
+            return Response(json.dumps({"message": "token is missing"}), status=400)
 
         # Attempt to decode token and fetch user from database
         try:
             payload = jwt.decode(token, jwt_secret_key, algorithms=["HS256"])
-            user = user_entity.get_by_id(payload["userId"])
+            user = user_service.get_user_by_id(payload["userId"])
 
         # Return error message on invalid token
         except:
-            return "token is invalid", 400
+            return Response(json.dumps({"message": "token is invalid"}), status=400)
 
         # Pass user id to next route
         user_id = user["user_id"]

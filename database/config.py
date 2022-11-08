@@ -22,7 +22,7 @@ def connect_to_database():
     return connection, cur
 
 
-def get_query(query, data):
+def query_one(query, data):
     """Takes in a query string and data and returns the result of running that SQL
     query for the database."""
 
@@ -30,26 +30,50 @@ def get_query(query, data):
     connection, cursor = connect_to_database()
     cursor.execute(query, data)
 
-    # Get rows and convert to list of dictionaries
-    rows = cursor.fetchall()
-    data = [dict(row) for row in rows]
+    # Fetch row
+    row = cursor.fetchone()
 
     # Close connection and cursor
     connection.close()
     cursor.close()
 
-    # Return data
-    if len(data) == 0:
-        data = None
+    # Convert row to dictionary
+    if row is not None:
+        row = dict(row)
 
-    return data
+    return row
 
 
-def send_query(query, data):
-    """Takes in a query string and data. Modifies the database by running the SQL query.
-    Does not return anything."""
+def query_many(query, data):
+    """Takes in a query string and data and returns the result of running that SQL
+    query for the database."""
+
+    # Establish connection and execute query on cursor
     connection, cursor = connect_to_database()
     cursor.execute(query, data)
+
+    # Fetch rows and convert to list of dictionaries
+    rows = cursor.fetchall()
+    rows = [dict(row) for row in rows]
+
+    # Close connection and cursor
+    connection.close()
+    cursor.close()
+
+    return rows
+
+
+def mutation(query, data):
+    """Takes in a query string and data. Modifies the database by running the SQL query.
+    Does not return anything."""
+
+    # Establish connection and execute query on cursor
+    connection, cursor = connect_to_database()
+    cursor.execute(query, data)
+
+    # Commit mutation
     connection.commit()
+
+    # Close connection and cursor
     connection.close()
     cursor.close()

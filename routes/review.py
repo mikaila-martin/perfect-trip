@@ -1,5 +1,5 @@
-from flask import Blueprint, abort, request
-import database.review as review_entity
+from flask import Blueprint, request, Response
+import database.review as review_service
 from middleware.auth import validate_token
 import json
 
@@ -9,54 +9,63 @@ review_bp = Blueprint("review", __name__)
 @review_bp.route("/", methods=["POST"])
 @validate_token
 def create_review(user_id):
+
     data = json.loads(request.data)
 
     # Create review
-    response = review_entity.create_review(
-        user_id,
-        data["exp_id"],
-        data["rating"],
-        data["comment"],
-    )
+    try:
 
-    if response == 1:
-        abort(403)
+        review = review_service.create_review(
+            {
+                "user_id": user_id,
+                "exp_id": data["exp_id"],
+                "rating": data["rating"],
+                "comment": data["comment"],
+            }
+        )
+        return Response(json.dumps({"review": review}), status=200)
 
-    return json.dumps(pack_reviews(response))
+    # Handle exception
+    except Exception as message:
+
+        return Response(json.dumps({"message": str(message)}), status=400)
 
 
-@review_bp.route("/<rev_id>", methods=["POST"])
+@review_bp.route("/<review_id>", methods=["POST"])
 @validate_token
-def update_review(user_id, rev_id):
+def update_review(user_id, review_id):
+
     data = json.loads(request.data)
 
     # Update review
-    response = review_entity.update_review(
-        rev_id,
-        data["rating"],
-        data["comment"],
-    )
+    try:
 
-    if response == 1:
-        abort(404)
+        review = review_service.update_review(
+            {
+                "review_id": review_id,
+                "rating": data["rating"],
+                "comment": data["comment"],
+            }
+        )
+        return Response(json.dumps({"review": review}), status=200)
 
-    if response == 2:
-        abort(403)
+    # Handle exception
+    except Exception as message:
 
-    return json.dumps(pack_reviews(response))
+        return Response(json.dumps({"message": str(message)}), status=400)
 
 
-@review_bp.route("/<rev_id>", methods=["DELETE"])
+@review_bp.route("/<review_id>", methods=["DELETE"])
 @validate_token
-def delete_review(user_id, rev_id):
+def delete_review(user_id, review_id):
 
     # Delete review
-    response = review_entity.delete_review(rev_id)
+    try:
 
-    if response == 1:
-        abort(404)
+        review_service.delete_review(review_id)
+        return Response(json.dumps({"review_id": review_id}), status=200)
 
-    if response == 2:
-        abort(403)
+    # Handle exception
+    except Exception as message:
 
-    return "Successfully Deleted"
+        return Response(json.dumps({"message": str(message)}), status=400)
