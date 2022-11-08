@@ -5,6 +5,8 @@ load_dotenv()
 
 env = os.getenv("PYTHON_ENV") or "development"
 
+jwt_secret_key = os.getenv("JWT_SECRET_KEY")
+
 postgres = {
     "production": {
         "host": os.getenv("POSTGRES_PROD_HOST"),
