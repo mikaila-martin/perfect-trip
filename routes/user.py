@@ -1,5 +1,5 @@
-from flask import Blueprint, abort, request
-from database import *
-import json
+from flask import Blueprint
+from database.user import *
+
 
 user_bp = Blueprint("user", __name__)

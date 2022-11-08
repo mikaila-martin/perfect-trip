@@ -1,7 +1,8 @@
 from flask import Blueprint, abort, request
-from database import *
+from middleware.auth import validate_token
+import database.experience as experience_entity
+import database.trip as trip_entity
 import json
-from routes import auth
 
 trip_bp = Blueprint("trip", __name__)
 
@@ -52,10 +53,10 @@ def pack_experience(experience_data, user_data, review_data, keywords):
 
 
 def get_and_pack_trip(trip_id):
-    itin_data, exp_data, user_data = get_trip(trip_id)
+    itin_data, exp_data, user_data = trip_entity.get_trip(trip_id)
     experiences_table = []
     for experience in exp_data:
-        exp_info = get_experience(experience[0])
+        exp_info = experience_entity.get_experience(experience[0])
         packed_experience = pack_experience(
             exp_info[0], exp_info[1], exp_info[2], exp_info[3]
         )
@@ -82,7 +83,7 @@ def get_and_pack_trip(trip_id):
 
 @trip_bp.route("/", methods=["GET", "POST", "PATCH", "DELETE"])
 @trip_bp.route("/<trip_id>", methods=["GET", "POST", "PATCH", "DELETE"])
-@auth.token_required
+@validate_token
 def trip(token_id, trip_id=None):
     if request.method == "GET":
         if trip_id is None:
@@ -97,7 +98,7 @@ def trip(token_id, trip_id=None):
             abort(401)
         if int(token_id) not in trip_data["members"]:
             abort(403)
-        trip_id = make_trip(
+        trip_id = trip_entity.create_trip(
             name=trip_data["name"],
             start_date=trip_data["startDate"],
             end_date=trip_data["endDate"],
@@ -114,7 +115,7 @@ def trip(token_id, trip_id=None):
         if int(token_id) not in trip_data["members"]:
             abort(403)
         if (
-            update_trip(
+            trip_entity.update_trip(
                 trip_id=trip_id,
                 name=trip_data["name"],
                 start_date=trip_data["startDate"],
@@ -129,7 +130,7 @@ def trip(token_id, trip_id=None):
     elif request.method == "DELETE":
         if trip_id is None:
             abort(400)
-        response = delete_trip(trip_id, token_id)
+        response = trip_entity.delete_trip(trip_id, token_id)
         if response == 1:
             abort(404)
         elif response == 2:
@@ -138,13 +139,13 @@ def trip(token_id, trip_id=None):
 
 
 @trip_bp.route("/user/<user_id>", methods=["GET"])
-@auth.token_required
+@validate_token
 def get_trips_by_user(token_id, user_id=None):
     if user_id is not None:
         if user_id != token_id:
             abort(403)
         trip_array = []
-        ids = get_trip_ids_by_user(user_id)
+        ids = trip_entity.get_trip_ids_by_user(user_id)
         for id in ids:
             trip_array.append(get_and_pack_trip(id[0]))
         return json.dumps({"trips": trip_array})
