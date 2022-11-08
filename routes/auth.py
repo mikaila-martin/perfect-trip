@@ -84,5 +84,4 @@ def login():
 
     # Handle exception
     except Exception as message:
-
         return Response(json.dumps({"message": str(message)}), status=400)

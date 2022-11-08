@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, request
+from flask import Blueprint, request
 from services.google import places_autocomplete
 
 places_bp = Blueprint("places", __name__)

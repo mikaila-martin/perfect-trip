@@ -81,7 +81,6 @@ def create_experience(user_id):
 
     # Create experience
     try:
-
         experience = experience_service.create_experience(
             {
                 "user_id": user_id,

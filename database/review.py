@@ -1,5 +1,4 @@
-from database.config import get_query, send_query
-from util import pack_reviews
+from database.connection import get_query, send_query
 
 
 def get_review(rev_id):

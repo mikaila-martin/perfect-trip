@@ -22,7 +22,7 @@ def connect_to_database():
     return connection, cur
 
 
-def get_query(query, data):
+def get_query(query, data=None):
     """Takes in a query string and data and returns the result of running that SQL
     query for the database."""
 
@@ -45,7 +45,7 @@ def get_query(query, data):
     return data
 
 
-def send_query(query, data):
+def send_query(query, data=None):
     """Takes in a query string and data. Modifies the database by running the SQL query.
     Does not return anything."""
     connection, cursor = connect_to_database()

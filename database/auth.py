@@ -1,4 +1,4 @@
-from database.config import get_query, send_query
+from database.connection import get_query, send_query
 
 
 def register_user(email, username, password_hash):
