@@ -1,63 +1,18 @@
-from flask import Blueprint, abort, request
+from flask import Blueprint, request, Response
 from middleware.auth import validate_token
 import database.experience as experience_entity
 import database.trip as trip_entity
 import json
-from routes import auth
+from util import pack_experience
 
 trip_bp = Blueprint("trip", __name__)
-
-
-def pack_reviews(review_data):
-    review_list = []
-    for tup in review_data:
-        review = {
-            "reviewId": tup[0],
-            "rating": tup[1],
-            "comment": tup[2],
-            "user": {"userId": tup[3], "username": tup[4], "avatar": tup[5]},
-        }
-        review_list.append(review)
-    return review_list
-
-
-def pack_keywords(keywords):
-    keywords_list = []
-    for tup in keywords:
-        keywords_list.append(tup[0])
-    return keywords_list
-
-
-def pack_experience(experience_data, user_data, review_data, keywords):
-    review_list = pack_reviews(review_data)
-    keywords_list = pack_keywords(keywords)
-    packed_experience = {
-        "experienceId": experience_data[0],
-        "name": experience_data[2],
-        "description": experience_data[3],
-        "keywords": keywords_list,
-        "coordinates": {
-            "lat": float(experience_data[4]),
-            "lon": float(experience_data[5]),
-        },
-        "dates": {"start": str(experience_data[6]), "end": str(experience_data[7])},
-        "images": experience_data[8],
-        "country": experience_data[9],
-        "creator": {
-            "userId": user_data[0],
-            "username": user_data[1],
-            "avatar": user_data[2],
-        },
-        "reviews": review_list,
-    }
-    return packed_experience
 
 
 def get_and_pack_trip(trip_id):
     itin_data, exp_data, user_data = trip_entity.get_trip(trip_id)
     experiences_table = []
     for experience in exp_data:
-        exp_info = experience_entity.get_experience(experience[0])
+        exp_info = experience_entity.get_experience_by_id(experience[0])
         packed_experience = pack_experience(
             exp_info[0], exp_info[1], exp_info[2], exp_info[3]
         )
@@ -82,23 +37,27 @@ def get_and_pack_trip(trip_id):
     return packed_trip
 
 
-@trip_bp.route("/", methods=["GET", "POST", "PATCH", "DELETE"])
-@trip_bp.route("/<trip_id>", methods=["GET", "POST", "PATCH", "DELETE"])
+@trip_bp.route("/<trip_id>", methods=["GET"])
 @validate_token
-def trip(token_id, trip_id=None):
-    if request.method == "GET":
-        if trip_id is None:
-            abort(400)
+def get_trip(user_id, trip_id):
+    try:
         trip = get_and_pack_trip(trip_id)
         members = [trip["members"][i]["userId"] for i in range(len(trip["members"]))]
-        if token_id not in members:
-            abort(403)
-    elif request.method == "POST":
+        if user_id not in members:
+            return Response(json.dumps({"message": "Trip does not belong to user."}), status=400)
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
+
+
+@trip_bp.route("/", methods=["POST"])
+@validate_token
+def post_trip(user_id):
+    try:
         trip_data = json.loads(request.data)
         if trip_data["members"] is None:
-            abort(401)
-        if int(token_id) not in trip_data["members"]:
-            abort(403)
+            return Response(json.dumps({"message": "Trip must have members."}), status=400)
+        if int(user_id) not in trip_data["members"]:
+            return Response(json.dumps({"message": "Trip does not belong to user."}), status=400)
         trip_id = trip_entity.create_trip(
             name=trip_data["name"],
             start_date=trip_data["startDate"],
@@ -107,48 +66,51 @@ def trip(token_id, trip_id=None):
             members=trip_data["members"],
         )
         return get_and_pack_trip(trip_id)
-    elif request.method == "PATCH":
-        if trip_id is None:
-            abort(400)
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
+
+
+@trip_bp.route("/<trip_id>", methods=["PATCH"])
+@validate_token
+def update_trip(user_id, trip_id):
+    try:
         trip_data = json.loads(request.data)
         if trip_data["members"] is None:
-            abort(401)
-        if int(token_id) not in trip_data["members"]:
-            abort(403)
-        if (
-            trip_entity.update_trip(
+            return Response(json.dumps({"message": "Trip must have members."}), status=400)
+        if int(user_id) not in trip_data["members"]:
+            return Response(json.dumps({"message": "Trip does not belong to user."}), status=400)
+        trip_entity.update_trip(
                 trip_id=trip_id,
                 name=trip_data["name"],
                 start_date=trip_data["startDate"],
                 end_date=trip_data["endDate"],
                 experiences=trip_data["experiences"],
-                members=trip_data["members"],
-            )
-            == 1
-        ):
-            abort(404)
+                members=trip_data["members"])
+
         return get_and_pack_trip(trip_id)
-    elif request.method == "DELETE":
-        if trip_id is None:
-            abort(400)
-        response = trip_entity.delete_trip(trip_id, token_id)
-        if response == 1:
-            abort(404)
-        elif response == 2:
-            abort(403)
-        return "Successfully Deleted"
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
 
 
-@trip_bp.route("/user/<user_id>", methods=["GET"])
+@trip_bp.route("/<trip_id>", methods=["DELETE"])
 @validate_token
-def get_trips_by_user(token_id, user_id=None):
-    if user_id is not None:
-        if user_id != token_id:
-            abort(403)
+def update_trip(user_id, trip_id):
+    try:
+        trip_entity.delete_trip(trip_id, user_id)
+        return "Trip Deleted"
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
+
+
+@trip_bp.route("/user/", methods=["GET"])
+@validate_token
+def get_trips_by_user(user_id):
+    try:
         trip_array = []
         ids = trip_entity.get_trip_ids_by_user(user_id)
         for id in ids:
             trip_array.append(get_and_pack_trip(id[0]))
         return json.dumps({"trips": trip_array})
-    else:
-        abort(400)
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
+

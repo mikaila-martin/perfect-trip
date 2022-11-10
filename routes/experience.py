@@ -1,10 +1,9 @@
-from flask import Blueprint, abort, request, Response
+from flask import Blueprint, request, Response
 import database.experience as experience_service
 from middleware.auth import validate_token
 from services.google import places_nearby
 from util import get_country
 import json
-from routes import auth
 
 experience_bp = Blueprint("experience", __name__)
 
@@ -37,7 +36,7 @@ def search():
         ne_lat, sw_lat, ne_lng, sw_lng, keywords
     )
 
-    return json.dumps({"experiences": places})
+    return json.dumps({"experiences": experiences, "places": places})
 
 
 @experience_bp.route("/<exp_id>", methods=["GET"])

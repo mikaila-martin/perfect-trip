@@ -63,7 +63,7 @@ def create_trip(name, start_date, end_date, experiences, members):
 
 def update_trip(trip_id, name, start_date, end_date, experiences, members):
     if not get_query(f"SELECT * from pt_schema.trips WHERE trips.trip_id = {trip_id};"):
-        return 1
+        raise Exception("Trip not found.")
     send_query(
         f"UPDATE pt_schema.trips SET trip_name = '{name}', "
         f"trip_start = '{start_date}', trip_end = '{end_date}' "
@@ -96,9 +96,9 @@ def delete_trip(trip_id, token_id):
         f"WHERE trips.trip_id = {trip_id};"
     )
     if not members:
-        return 1
+        raise Exception("Trip not found.")
     for i in range(len(members)):
         members[i] = members[i][0]
     if int(token_id) not in members:
-        return 2
+        raise Exception("Trip does not belong to this user.")
     send_query(f"DELETE FROM pt_schema.trips WHERE trips.trip_id = {trip_id}")
