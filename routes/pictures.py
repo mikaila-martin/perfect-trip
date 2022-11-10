@@ -1,5 +1,5 @@
 from flask import Blueprint, request, Response
-from services.aws import *
+from services.AWS import *
 import json
 import base64
 
