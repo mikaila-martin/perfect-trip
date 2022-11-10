@@ -39,7 +39,7 @@ def get_and_pack_trip(trip_id):
 
 @trip_bp.route("/<trip_id>", methods=["GET"])
 @validate_token
-def get_trip(user_id, trip_id):
+def get_itinerary(user_id, trip_id):
     try:
         trip = get_and_pack_trip(trip_id)
         members = [trip["members"][i]["userId"] for i in range(len(trip["members"]))]
@@ -51,7 +51,7 @@ def get_trip(user_id, trip_id):
 
 @trip_bp.route("/", methods=["POST"])
 @validate_token
-def post_trip(user_id):
+def post_itinerary(user_id):
     try:
         trip_data = json.loads(request.data)
         if trip_data["members"] is None:
@@ -72,7 +72,7 @@ def post_trip(user_id):
 
 @trip_bp.route("/<trip_id>", methods=["PATCH"])
 @validate_token
-def update_trip(user_id, trip_id):
+def update_itinerary(user_id, trip_id):
     try:
         trip_data = json.loads(request.data)
         if trip_data["members"] is None:
@@ -94,7 +94,7 @@ def update_trip(user_id, trip_id):
 
 @trip_bp.route("/<trip_id>", methods=["DELETE"])
 @validate_token
-def update_trip(user_id, trip_id):
+def delete_itinerary(user_id, trip_id):
     try:
         trip_entity.delete_trip(trip_id, user_id)
         return "Trip Deleted"
