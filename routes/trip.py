@@ -97,10 +97,8 @@ def delete_itinerary(user_id, trip_id):
     try:
         trip_entity.delete_trip(user_id, trip_id)
         return "Trip Deleted"
-    #except Exception as message:
-    #    return Response(json.dumps({"message": str(message)}), status=400)
-    finally:
-        pass
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
 
 
 @trip_bp.route("/user/", methods=["GET"])

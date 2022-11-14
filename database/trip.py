@@ -93,7 +93,6 @@ def update_trip(trip_id, name, start_date, end_date, experiences, members):
 
 
 def delete_trip(token_id, trip_id):
-    print(trip_id)
     members = get_query(
         """SELECT users_trips.user_id from pt_schema.trips 
         INNER JOIN pt_schema.users_trips 
