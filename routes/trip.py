@@ -3,7 +3,6 @@ from middleware.auth import validate_token
 import database.experience as experience_entity
 import database.trip as trip_entity
 import json
-from util import pack_experience
 
 trip_bp = Blueprint("trip", __name__)
 
@@ -12,25 +11,24 @@ def get_and_pack_trip(trip_id):
     itin_data, exp_data, user_data = trip_entity.get_trip(trip_id)
     experiences_table = []
     for experience in exp_data:
-        exp_info = experience_entity.get_experience_by_id(experience[0])
-        packed_experience = pack_experience(
-            exp_info[0], exp_info[1], exp_info[2], exp_info[3]
-        )
+        packed_experience = experience_entity.get_experience_by_id(experience["exp_id"])
         experiences_table.append(
             {
                 "experience": packed_experience,
-                "date": str(experience[1]),
-                "time": str(experience[2]),
+                "date": str(experience["itin_date"]),
+                "time": str(experience["time"]),
             }
         )
     user_table = []
     for user in user_data:
-        user_table.append({"userId": user[0], "username": user[1], "avatar": user[2]})
+        user_table.append({"userId": user["user_id"],
+                           "username": user["email"],
+                           "avatar": user["username"]})
     packed_trip = {
-        "tripID": itin_data[0][0],
-        "name": itin_data[0][1],
-        "startDate": str(itin_data[0][2]),
-        "endDate": str(itin_data[0][3]),
+        "tripID": itin_data[0]["trip_id"],
+        "name": itin_data[0]["trip_name"],
+        "startDate": str(itin_data[0]["trip_start"]),
+        "endDate": str(itin_data[0]["trip_end"]),
         "experiences": experiences_table,
         "members": user_table,
     }
@@ -45,6 +43,7 @@ def get_itinerary(user_id, trip_id):
         members = [trip["members"][i]["userId"] for i in range(len(trip["members"]))]
         if user_id not in members:
             return Response(json.dumps({"message": "Trip does not belong to user."}), status=400)
+        return Response(json.dumps({"trip": trip}), status=200)
     except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
 
@@ -96,10 +95,12 @@ def update_itinerary(user_id, trip_id):
 @validate_token
 def delete_itinerary(user_id, trip_id):
     try:
-        trip_entity.delete_trip(trip_id, user_id)
+        trip_entity.delete_trip(user_id, trip_id)
         return "Trip Deleted"
-    except Exception as message:
-        return Response(json.dumps({"message": str(message)}), status=400)
+    #except Exception as message:
+    #    return Response(json.dumps({"message": str(message)}), status=400)
+    finally:
+        pass
 
 
 @trip_bp.route("/user/", methods=["GET"])

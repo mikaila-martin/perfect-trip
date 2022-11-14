@@ -32,11 +32,10 @@ def register_user(email, username, password_hash):
 
 
 def login_user(email, password_hash):
-
     user = get_query(
         """
         SELECT * FROM pt_schema.users 
-        WHERE users.email = %s AND users.password = %s
+        WHERE users.email = %s AND users.password = %s;
         """,
         (email, password_hash),
     )

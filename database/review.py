@@ -9,9 +9,8 @@ def get_review(rev_id):
         f"WHERE reviews.review_id = '{rev_id}';"
     )
     if not response:
-        return 1
-    else:
-        return response
+        raise Exception("Review not found.")
+    return response
 
 
 def create_review(user_id, exp_id, stars, review_str):
@@ -43,7 +42,7 @@ def update_review(user_id, rev_id, stars, review_str):
     )
     if not current:
         raise Exception("Review does not exist.")
-    if current[0][0] != user_id:
+    if current[0]["user_id"] != user_id:
         raise Exception("Review does not belong to this user.")
     send_query(
         f"UPDATE pt_schema.reviews SET rev_rating = '{stars}', "
@@ -57,17 +56,18 @@ def update_review(user_id, rev_id, stars, review_str):
     )
 
 
-def delete_review(rev_id, token_id):
-    user_id = get_query(
-        f"SELECT reviews.user_id FROM pt_schema.reviews "
-        f"WHERE reviews.review_id = '{rev_id}';"
-    )[0][0]
-    if not user_id:
+def delete_review(token_id, rev_id):
+    try:
+        user_id = get_query(
+            f"SELECT reviews.user_id FROM pt_schema.reviews "
+            f"WHERE reviews.review_id = %s;", rev_id
+        )[0]["user_id"]
+    except TypeError and KeyError:
         raise Exception("Review not found")
-    if int(token_id) != user_id:
+    if token_id != user_id:
         raise Exception("Review does not belong to this user")
     else:
         send_query(
             f"DELETE FROM pt_schema.reviews WHERE reviews.review_id = '{rev_id}';"
         )
-        return 0
+        return "Successfully Deleted."

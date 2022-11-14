@@ -12,26 +12,30 @@ def get_trip_ids_by_user(user_id):
 
 def get_trip(trip_id):
     trip_data = get_query(
-        f"SELECT trips.trip_id, trips.trip_name, trips.trip_start, trips.trip_end "
-        f"FROM pt_schema.trips WHERE trips.trip_id = '{trip_id}'"
+        """
+        SELECT trips.trip_id, trips.trip_name, trips.trip_start, trips.trip_end 
+        FROM pt_schema.trips WHERE trips.trip_id = %s;
+        """, (trip_id,),
     )
     itinerary_data = get_query(
-        f"SELECT experiences.exp_id, itineraries.itin_date, itineraries.time"
-        f" FROM pt_schema.experiences "
-        f"INNER JOIN pt_schema.itineraries "
-        f"ON experiences.exp_id = itineraries.exp_id "
-        f"INNER JOIN pt_schema.trips "
-        f"ON itineraries.trip_id = trips.trip_id "
-        f"WHERE trips.trip_id = '{trip_data[0][0]}'"
+        """
+        SELECT experiences.exp_id, itineraries.itin_date, itineraries.time
+        FROM pt_schema.experiences 
+        INNER JOIN pt_schema.itineraries 
+        ON experiences.exp_id = itineraries.exp_id 
+        INNER JOIN pt_schema.trips 
+        ON itineraries.trip_id = trips.trip_id 
+        WHERE trips.trip_id = %s;""", (trip_id,),
     )
     user_data = get_query(
-        f"SELECT users.user_id, users.email, users.username "
-        f"FROM pt_schema.users "
-        f"INNER JOIN pt_schema.users_trips "
-        f"ON users.user_id = users_trips.user_id "
-        f"INNER JOIN pt_schema.trips "
-        f"ON users_trips.trip_id = trips.trip_id "
-        f"WHERE trips.trip_id = '{trip_data[0][0]}'"
+        """
+        SELECT users.user_id, users.email, users.username 
+        FROM pt_schema.users 
+        INNER JOIN pt_schema.users_trips 
+        ON users.user_id = users_trips.user_id 
+        INNER JOIN pt_schema.trips 
+        ON users_trips.trip_id = trips.trip_id 
+        WHERE trips.trip_id = %s;""", (trip_id,),
     )
     return trip_data, itinerary_data, user_data
 
@@ -39,14 +43,14 @@ def get_trip(trip_id):
 def create_trip(name, start_date, end_date, experiences, members):
     send_query(
         f"INSERT INTO pt_schema.trips (trip_name, trip_start, trip_end) "
-        f"VALUES ('{name}', '{start_date}','{end_date}')"
+        f"VALUES (%s, %s, %s)", (name, start_date, end_date)
     )
     trip_id = get_query(
         f"SELECT trips.trip_id from pt_schema.trips "
         f"WHERE trips.trip_name = '{name}' AND "
         f"trips.trip_start = '{start_date}' AND "
         f"trips.trip_end = '{end_date}'"
-    )[-1][0]
+    )[-1]["trip_id"]
     for member_id in members:
         send_query(
             f"INSERT INTO pt_schema.users_trips (user_id, trip_id) "
@@ -88,17 +92,18 @@ def update_trip(trip_id, name, start_date, end_date, experiences, members):
         )
 
 
-def delete_trip(trip_id, token_id):
+def delete_trip(token_id, trip_id):
+    print(trip_id)
     members = get_query(
-        f"SELECT users_trips.user_id from pt_schema.trips "
-        f"INNER JOIN pt_schema.users_trips "
-        f"ON users_trips.trip_id = trips.trip_id "
-        f"WHERE trips.trip_id = {trip_id};"
+        """SELECT users_trips.user_id from pt_schema.trips 
+        INNER JOIN pt_schema.users_trips 
+        ON users_trips.trip_id = trips.trip_id 
+        WHERE trips.trip_id = %s;""", (trip_id,)
     )
     if not members:
         raise Exception("Trip not found.")
     for i in range(len(members)):
-        members[i] = members[i][0]
+        members[i] = members[i]["user_id"]
     if int(token_id) not in members:
         raise Exception("Trip does not belong to this user.")
-    send_query(f"DELETE FROM pt_schema.trips WHERE trips.trip_id = {trip_id}")
+    send_query("DELETE FROM pt_schema.trips WHERE trips.trip_id = %s;", (trip_id,))

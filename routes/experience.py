@@ -64,6 +64,8 @@ def get_user_experiences(user_id):
         return Response(json.dumps({"experiences": experiences}), status=200)
 
     # Handle exception
+    except TypeError:
+        return Response(json.dumps({"experiences": []}), status=200)
     except Exception as message:
 
         return Response(json.dumps({"message": str(message)}), status=400)
@@ -89,8 +91,8 @@ def create_experience(user_id):
                 "keywords": data["keywords"],
                 "latitude": data["latitude"],
                 "longitude": data["longitude"],
-                "exp_start": data["exp_start"],
-                "exp_end": data["exp_end"],
+                "exp_start": data["start"],
+                "exp_end": data["end"],
                 "images": images,
                 "country": country,
             }
@@ -101,6 +103,7 @@ def create_experience(user_id):
     except Exception as message:
 
         return Response(json.dumps({"message": str(message)}), status=400)
+
 
 
 @experience_bp.route("/<exp_id>", methods=["PATCH"])

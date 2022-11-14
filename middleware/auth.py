@@ -28,6 +28,7 @@ def validate_token(f):
         except:
             return "token is invalid", 400
 
+
         # Pass user id to next route
         user_id = user["user_id"]
         return f(user_id, *args, **kwargs)
