@@ -106,9 +106,9 @@ def delete_itinerary(user_id, trip_id):
 def get_trips_by_user(user_id):
     try:
         trip_array = []
-        ids = trip_entity.get_trip_ids_by_user(user_id)
-        for id in ids:
-            trip_array.append(get_and_pack_trip(id[0]))
+        trip_ids = trip_entity.get_trip_ids_by_user(user_id)
+        for id in trip_ids:
+            trip_array.append(get_and_pack_trip(id["trip_id"]))
         return json.dumps({"trips": trip_array})
     except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
