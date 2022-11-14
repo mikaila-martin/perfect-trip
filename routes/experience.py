@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, request, Response
+from flask import Blueprint, request, Response
 import database.experience as experience_service
 from middleware.auth import validate_token
 from services.google import places_nearby
@@ -36,7 +36,7 @@ def search():
         ne_lat, sw_lat, ne_lng, sw_lng, keywords
     )
 
-    return json.dumps({"experiences": places})
+    return json.dumps({"experiences": experiences, "places": places})
 
 
 @experience_bp.route("/<exp_id>", methods=["GET"])
@@ -64,6 +64,8 @@ def get_user_experiences(user_id):
         return Response(json.dumps({"experiences": experiences}), status=200)
 
     # Handle exception
+    except TypeError:
+        return Response(json.dumps({"experiences": []}), status=200)
     except Exception as message:
 
         return Response(json.dumps({"message": str(message)}), status=400)
@@ -81,7 +83,6 @@ def create_experience(user_id):
 
     # Create experience
     try:
-
         experience = experience_service.create_experience(
             {
                 "user_id": user_id,
@@ -90,8 +91,8 @@ def create_experience(user_id):
                 "keywords": data["keywords"],
                 "latitude": data["latitude"],
                 "longitude": data["longitude"],
-                "exp_start": data["exp_start"],
-                "exp_end": data["exp_end"],
+                "exp_start": data["start"],
+                "exp_end": data["end"],
                 "images": images,
                 "country": country,
             }
@@ -102,6 +103,7 @@ def create_experience(user_id):
     except Exception as message:
 
         return Response(json.dumps({"message": str(message)}), status=400)
+
 
 
 @experience_bp.route("/<exp_id>", methods=["PATCH"])

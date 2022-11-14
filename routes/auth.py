@@ -8,6 +8,10 @@ import jwt
 
 auth_bp = Blueprint("auth", __name__)
 
+# Code for jwt authentication from
+# https://www.bacancytechnology.com/blog/flask-jwt-authentication
+# 10/29/2022
+
 
 def hash_password(password):
     password = password.encode()
@@ -84,5 +88,4 @@ def login():
 
     # Handle exception
     except Exception as message:
-
         return Response(json.dumps({"message": str(message)}), status=400)

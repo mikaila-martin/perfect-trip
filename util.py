@@ -18,13 +18,13 @@ def pack_reviews(data):
 
     for row in data:
         review = {
-            "reviewId": row["rev_id"],
-            "rating": row["rating"],
+            "reviewId": row["review_id"],
+            "rating": row["rev_rating"],
             "comment": row["comment"],
             "user": {
                 "userId": row["user_id"],
                 "username": row["username"],
-                "avatar": row["avatar"],
+                "avatar": row["username"],
             },
         }
         reviews.append(review)

@@ -1,4 +1,4 @@
-from database.config import get_query
+from database.connection import get_query
 
 
 def get_by_id(user_id):

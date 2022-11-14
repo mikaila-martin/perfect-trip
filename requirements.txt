@@ -15,3 +15,7 @@ requests==2.28.1
 six==1.16.0
 urllib3==1.26.12
 Werkzeug==2.2.2
+boto3==1.26.04
+geopy==2.2
+pillow==9.3.0
+botocore

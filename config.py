@@ -26,6 +26,10 @@ postgres = {
 
 google_places_api_key = os.getenv("GOOGLE_PLACES_API_KEY")
 
+aws = {"aws_api_user": os.getenv("AWS_API_USER"),
+       "aws_api_key": os.getenv("AWS_API_KEY"),
+       "aws_region": "us-west-2"}
+
 keyword_list = [
     "airport",
     "amusement_park",

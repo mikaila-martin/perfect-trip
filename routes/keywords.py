@@ -1,5 +1,6 @@
 from flask import Blueprint
 import database.keyword as keyword_service
+from util import pack_keywords
 import json
 
 keywords_bp = Blueprint("keywords", __name__)
