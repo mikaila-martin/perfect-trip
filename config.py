@@ -24,11 +24,14 @@ postgres = {
     },
 }
 
-google_places_api_key = os.getenv("GOOGLE_PLACES_API_KEY")
+aws = {
+    "aws_api_user": os.getenv("AWS_API_USER"),
+    "aws_api_key": os.getenv("AWS_API_KEY"),
+    "aws_bucket_name": os.getenv("AWS_BUCKET_NAME"),
+    "aws_region": os.getenv("AWS_REGION"),
+}
 
-aws = {"aws_api_user": os.getenv("AWS_API_USER"),
-       "aws_api_key": os.getenv("AWS_API_KEY"),
-       "aws_region": "us-west-2"}
+google_places_api_key = os.getenv("GOOGLE_PLACES_API_KEY")
 
 keyword_list = [
     "airport",

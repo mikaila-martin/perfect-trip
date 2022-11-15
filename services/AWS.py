@@ -1,7 +1,8 @@
+import uuid
 import boto3
-import botocore.exceptions
+import base64
 from config import aws
-import os
+
 
 # Information on AWS and boto3 syntax and documentation from
 # https://realpython.com/python-boto3-aws-s3/#downloading-a-file
@@ -9,38 +10,59 @@ import os
 
 
 def connect():
-    s3_resource = boto3.resource('s3', aws_access_key_id=aws["aws_api_user"],
-                                 aws_secret_access_key=aws["aws_api_key"])
-    return s3_resource
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=aws["aws_api_user"],
+        aws_secret_access_key=aws["aws_api_key"],
+        region_name=aws["aws_region"],
+    )
+    return s3_client
 
 
-def upload_picture(picture_name, picture):
-    s3 = connect()
-    file = s3.Object(bucket_name="perfecttrippictures", key=picture_name)
-    image = open(picture_name, "wb")
-    image.write(picture)
-    image.close()
-    file.upload_file(picture_name)
-    os.remove(picture_name)
-
-
-def get_picture(picture_name):
-    s3 = connect()
-    file = s3.Object(bucket_name="perfecttrippictures", key=picture_name)
+def upload_image(image):
     try:
-        file.download_file(picture_name)
-    except botocore.exceptions.ClientError:
-        raise Exception("Experience Not Found")
-    image_str = open(picture_name, "rb")
-    binary = image_str.read()
-    image_str.close()
-    os.remove(picture_name)
-    return binary
+
+        # Establish S3 client connection
+        s3_client = connect()
+
+        # Extract image type and data
+        image_type = image.split(";base64,")[0]
+        image_data = image.split(";base64,")[0]
+
+        # Convert image data to byte string
+        image_body = base64.b64decode(image_data)
+
+        # Get AWS image bucket
+        image_bucket = aws["aws_bucket_name"]
+
+        # Generate UUID key
+        image_key = str(uuid.uuid4()) + ".jpg"  # TODO: make file type dynamic
+
+        # Create S3 object
+        response = s3_client.put_object(
+            Body=image_body, Bucket=image_bucket, Key=image_key
+        )
+
+        # Return image url
+        return (
+            f"https://{image_bucket}.s3.{aws['aws_region']}.amazonaws.com/{image_key}"
+        )
+
+    except Exception as e:
+        print(e)
 
 
-def delete_picture(picture_name):
-    s3 = connect()
-    picture = s3.Object(bucket_name="perfecttrippictures", key=picture_name)
-    picture.delete()
+def delete_image(image_key):
+    try:
 
+        # Establish S3 client connection
+        s3_client = connect()
 
+        # Get AWS image bucket
+        image_bucket = aws["aws_bucket_name"]
+
+        # Delete S3 object
+        s3_client.delete_object(Bucket=image_bucket, Key=image_key)
+
+    except Exception as e:
+        print(e)
