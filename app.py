@@ -13,7 +13,6 @@ from routes.user import user_bp
 from routes.trip import trip_bp
 from routes.places import places_bp
 from routes.experience import experience_bp
-from routes.pictures import picture_bp
 from routes.review import review_bp
 
 
@@ -26,7 +25,6 @@ app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(trip_bp, url_prefix="/trip")
 app.register_blueprint(places_bp, url_prefix="/places")
 app.register_blueprint(experience_bp, url_prefix="/experience")
-app.register_blueprint(picture_bp, url_prefix="/picture")
 app.register_blueprint(review_bp, url_prefix="/review")
 
 # Start server

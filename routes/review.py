@@ -11,7 +11,6 @@ review_bp = Blueprint("review", __name__)
 def get_a_review(rev_id):
     try:
         response = review_entity.get_review(rev_id)
-        print(response)
         return Response(json.dumps(pack_reviews(response)[0]))
     except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
@@ -41,7 +40,6 @@ def create_review(user_id):
 def update_review(user_id, rev_id):
     try:
         data = json.loads(request.data)
-        print(data)
         # Update review
         response = review_entity.update_review(
             user_id,

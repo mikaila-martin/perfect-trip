@@ -3,9 +3,9 @@ from database.connection import get_query, send_query
 
 def get_trip_ids_by_user(user_id):
     ids = get_query(
-        f"SELECT trips.trip_id FROM pt_schema.trips INNER JOIN pt_schema.users_trips "
-        f"ON trips.trip_id = users_trips.trip_id "
-        f"WHERE users_trips.user_id = '{user_id}'"
+        """SELECT trips.trip_id FROM pt_schema.trips INNER JOIN pt_schema.users_trips 
+        ON trips.trip_id = users_trips.trip_id 
+        WHERE users_trips.user_id = %s""", (user_id,)
     )
     return ids
 
@@ -42,53 +42,53 @@ def get_trip(trip_id):
 
 def create_trip(name, start_date, end_date, experiences, members):
     send_query(
-        f"INSERT INTO pt_schema.trips (trip_name, trip_start, trip_end) "
-        f"VALUES (%s, %s, %s)", (name, start_date, end_date)
+        """INSERT INTO pt_schema.trips (trip_name, trip_start, trip_end) 
+        VALUES (%s, %s, %s)""", (name, start_date, end_date)
     )
     trip_id = get_query(
-        f"SELECT trips.trip_id from pt_schema.trips "
-        f"WHERE trips.trip_name = '{name}' AND "
-        f"trips.trip_start = '{start_date}' AND "
-        f"trips.trip_end = '{end_date}'"
+        """SELECT trips.trip_id from pt_schema.trips 
+        WHERE trips.trip_name = %s AND 
+        trips.trip_start = %s AND 
+        trips.trip_end = %s""", (name, start_date, end_date)
     )[-1]["trip_id"]
     for member_id in members:
         send_query(
-            f"INSERT INTO pt_schema.users_trips (user_id, trip_id) "
-            f"VALUES ({member_id}, {trip_id})"
+            """INSERT INTO pt_schema.users_trips (user_id, trip_id) 
+            VALUES (%s, %s)""", (member_id, trip_id)
         )
     for experience in experiences:
         send_query(
-            f"INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time) "
-            f"VALUES ({trip_id}, {experience['experienceId']}, "
-            f"'{experience['date']}', '{experience['time']}')"
+            """INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time) 
+            VALUES (%s, %s, %s, %s);""",
+            (trip_id, experience['experienceId'], experience['date'], experience['time'])
         )
     return trip_id
 
 
 def update_trip(trip_id, name, start_date, end_date, experiences, members):
-    if not get_query(f"SELECT * from pt_schema.trips WHERE trips.trip_id = {trip_id};"):
+    if not get_query(f"SELECT * from pt_schema.trips WHERE trips.trip_id = %s;", (trip_id,)):
         raise Exception("Trip not found.")
     send_query(
-        f"UPDATE pt_schema.trips SET trip_name = '{name}', "
-        f"trip_start = '{start_date}', trip_end = '{end_date}' "
-        f"WHERE trip_id = {trip_id}"
+        """UPDATE pt_schema.trips SET trip_name = %s, 
+        trip_start = %s, trip_end = %s 
+        WHERE trip_id = %s;""", (name, start_date, end_date, trip_id)
     )
     send_query(
-        f"DELETE FROM pt_schema.users_trips WHERE users_trips.trip_id = '{trip_id}'"
+        """DELETE FROM pt_schema.users_trips WHERE users_trips.trip_id = %s""", (trip_id,)
     )
     for member_id in members:
         send_query(
-            f"INSERT INTO pt_schema.users_trips (user_id, trip_id) "
-            f"VALUES ({member_id}, {trip_id})"
+            """INSERT INTO pt_schema.users_trips (user_id, trip_id) 
+            VALUES (%s, %s)""", (member_id, trip_id)
         )
     send_query(
-        f"DELETE FROM pt_schema.itineraries WHERE itineraries.trip_id = '{trip_id}'"
+        """DELETE FROM pt_schema.itineraries WHERE itineraries.trip_id = %s""", (trip_id,)
     )
     for experience in experiences:
         send_query(
-            f"INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time) "
-            f"VALUES ({trip_id}, {experience['experienceId']}, "
-            f"'{experience['date']}', '{experience['time']}')"
+            """INSERT INTO pt_schema.itineraries (trip_id, exp_id, itin_date, time)
+            VALUES (%s, %s, %s, %s)""",
+            (trip_id, experience["experienceId"], experience["date"], experience['time'])
         )
 
 
