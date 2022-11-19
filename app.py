@@ -29,4 +29,4 @@ app.register_blueprint(review_bp, url_prefix="/review")
 
 # Start server
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(debug=env == "development")

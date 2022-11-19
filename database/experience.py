@@ -12,13 +12,20 @@ def search_experiences(n, s, e, w, keyword_array):
         f"experiences.longitude BETWEEN {s} AND {n} AND "
         f"experiences.latitude BETWEEN {w} AND {e}"
     )
+
+    if experiences is None:
+        return []
+
     id_array = []
     exp_array = []
+
     for exp in experiences:
         if exp[1] in keyword_array and exp[0] not in id_array:
             id_array.append(exp[0])
+
     for id in id_array:
         exp_array.append(get_experience_by_id(id))
+
     return exp_array
 
 
@@ -29,7 +36,7 @@ def get_experience_by_id(exp_id):
         """
         SELECT experiences.exp_id, experiences.user_id, experiences.title, 
         experiences.description, experiences.latitude, experiences.longitude, 
-        experiences.exp_start, experiences.exp_end, experiences.image, 
+        experiences.exp_start, experiences.exp_end, experiences.images, 
         experiences.country FROM pt_schema.experiences 
         WHERE experiences.exp_id = %s
         """,
@@ -117,7 +124,7 @@ def create_experience(experience):
     send_query(
         """
         INSERT INTO pt_schema.experiences (user_id, title, description, latitude,
-        longitude, country, image, exp_start, exp_end)
+        longitude, country, images, exp_start, exp_end)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """,
         (
@@ -167,7 +174,7 @@ def update_experience(experience):
     # Check to see if the experience already exists
     existing_experience = get_query(
         """
-        SELECT exp_id FROM pt_schema.experiences
+        SELECT user_id FROM pt_schema.experiences
         WHERE experiences.exp_id = %s
         """,
         (experience["exp_id"]),
@@ -176,11 +183,14 @@ def update_experience(experience):
     if existing_experience is None:
         raise Exception("Experience not found.")
 
+    if existing_experience[0]["user_id"] != experience["user_id"]:
+        raise Exception("Experience cannot be deleted.")
+
     # Update the experience
     send_query(
         """
         UPDATE pt_schema.experiences SET title = %s, description = %s, 
-        latitude = %s, longitude = %s, image = %s, user_id = %s, 
+        latitude = %s, longitude = %s, images = %s, user_id = %s, 
         exp_start = %s, exp_end = %s, country = %s WHERE exp_id = %s
         """,
         (
@@ -206,7 +216,7 @@ def update_experience(experience):
         (experience["exp_id"],),
     )
 
-    for keyword in (experience["keywords"],):
+    for keyword in experience["keywords"]:
         send_query(
             """
             INSERT INTO pt_schema.experiences_keywords (exp_id, keyword) 
@@ -232,6 +242,9 @@ def delete_experience(user_id, exp_id):
     if existing_experience is None:
         raise Exception("Experience not found.")
 
+    if existing_experience[0]["user_id"] != user_id:
+        raise Exception("Experience cannot be deleted.")
+
     # Delete the experience
     send_query(
         """
@@ -239,3 +252,17 @@ def delete_experience(user_id, exp_id):
         """,
         (exp_id,),
     )
+
+
+def get_images(exp_id):
+
+    # Get images
+    images = get_query(
+        """
+        SELECT experiences.images FROM pt_schema.experiences 
+        WHERE experiences.exp_id = %s
+        """,
+        (exp_id,),
+    )
+
+    return images[0]["images"]
