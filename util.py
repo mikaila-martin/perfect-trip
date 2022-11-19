@@ -49,12 +49,10 @@ def pack_experience(exp_data, user_data, review_data, keyword_data):
         "title": exp_data["title"],
         "description": exp_data["description"],
         "keywords": keywords_list,
-        "coords": {
-            "lat": float(exp_data["latitude"]),
-            "lon": float(exp_data["longitude"]),
-        },
+        "latitude": float(exp_data["latitude"]),
+        "longitude": float(exp_data["longitude"]),
         "dates": {"start": str(exp_data["exp_start"]), "end": str(exp_data["exp_end"])},
-        "images": exp_data["image"],
+        "images": exp_data["images"].split(","),
         "country": exp_data["country"],
         "creator": {
             "userId": user_data["user_id"],

@@ -27,7 +27,7 @@ def upload_image(image):
 
         # Extract image type and data
         image_type = image.split(";base64,")[0]
-        image_data = image.split(";base64,")[0]
+        image_data = image.split(";base64,")[1]
 
         # Convert image data to byte string
         image_body = base64.b64decode(image_data)

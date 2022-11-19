@@ -17,15 +17,15 @@ def places_details(place_id):
     if status == "OK":
 
         # Get photo urls
-        photos = []
+        images = []
 
         if "photos" in result:
             for photo in result["photos"]:
                 url = f'{BASE_URL}/photo?key={google_places_api_key}&photo_reference={photo["photo_reference"]}&maxwidth=400'
-                photos.append(url)
+                images.append(url)
 
         # Return none if there are no photos
-        if len(photos) == 0:
+        if len(images) == 0:
             return None
 
         # Get location details
@@ -63,18 +63,16 @@ def places_details(place_id):
         # Format place object
         place = {
             "id": result["place_id"],
-            "name": result["name"],
+            "title": result["name"],
             "description": description,
             "keywords": types,
             "rating": rating,
-            "photos": photos,
+            "images": images,
             "city": city,
             "country": country,
             "country_code": country_code.lower(),
-            "coords": {
-                "lat": round(result["geometry"]["location"]["lat"], 4),
-                "lng": round(result["geometry"]["location"]["lng"], 4),
-            },
+            "latitude": round(result["geometry"]["location"]["lat"], 4),
+            "longitude": round(result["geometry"]["location"]["lng"], 4),
         }
 
         return place
