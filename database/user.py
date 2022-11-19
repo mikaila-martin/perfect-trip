@@ -32,3 +32,7 @@ def check_password(user_id, password_hash):
     WHERE users.user_id = %s AND users.password = %s;""", (user_id, password_hash)):
         raise Exception("Password is incorrect.")
     return
+
+
+def delete_account_db(user_id):
+    send_query("""DELETE FROM pt_schema.users WHERE users.user_id = %s; """, (user_id,))

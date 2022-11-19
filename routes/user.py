@@ -28,8 +28,21 @@ def update_password(user_id):
         pass_hash = hash_password(data["password"])
         check_password(user_id, pass_hash)
         if data["passwordA"] != data["passwordB"]:
-            return Response(json.dumps({"message": "Passwords not equal."}), status=400)
+            return Response(json.dumps({"message": "Passwords not Equal."}), status=400)
         update_password_db(user_id, hash_password(data["passwordA"]))
-        return Response(json.dumps({"message": "Password updated"}), status=200)
+        return Response(json.dumps({"message": "Password updated."}), status=200)
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
+
+
+@user_bp.route("/delete", methods=["POST"])
+@validate_token
+def delete_account(user_id):
+    try:
+        data = json.loads(request.data)
+        pass_hash = hash_password(data["passwordD"])
+        check_password(user_id, pass_hash)
+        delete_account_db(user_id)
+        return Response(json.dumps({"message": "Account Deleted"}), status=200)
     except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
