@@ -2,13 +2,11 @@ from flask import Blueprint, request, Response
 import database.experience as experience_service
 from middleware.auth import validate_token
 from services.google import places_nearby
+from services.aws import upload_image, delete_image
 from util import get_country
 import json
 
 experience_bp = Blueprint("experience", __name__)
-
-# PLACEHOLDER IMAGES
-images = "https://via.placeholder.com/150/0000FF/FFFFFF?Text=PHOTO_1,https://via.placeholder.com/150/0000FF/FFFFFF?Text=PHOTO_2,https://via.placeholder.com/150/0000FF/FFFFFF?Text=PHOTO_3"
 
 
 @experience_bp.route("/search", methods=["GET"])
@@ -36,7 +34,7 @@ def search():
         ne_lat, sw_lat, ne_lng, sw_lng, keywords
     )
 
-    return json.dumps({"experiences": experiences, "places": places})
+    return json.dumps({"experiences": experiences + places})
 
 
 @experience_bp.route("/<exp_id>", methods=["GET"])
@@ -74,15 +72,25 @@ def get_user_experiences(user_id):
 @experience_bp.route("/", methods=["POST"])
 @validate_token
 def create_experience(user_id):
-    data = json.loads(request.data)
 
-    # Get country from coordinates
-    country = get_country(data["latitude"], data["longitude"])
-
-    # TODO: Upload images to AWS S3 and get URLs
-
-    # Create experience
     try:
+
+        # Get data from request
+        data = json.loads(request.data)
+
+        # Get country from coordinates
+        country = get_country(data["latitude"], data["longitude"])
+
+        # Upload images to AWS S3 and build url list
+        images = []
+
+        for image in data["images"]:
+            image_key = upload_image(image)
+            images.append(image_key)
+
+        images = ",".join(images)
+
+        # Create experience
         experience = experience_service.create_experience(
             {
                 "user_id": user_id,
@@ -91,8 +99,8 @@ def create_experience(user_id):
                 "keywords": data["keywords"],
                 "latitude": data["latitude"],
                 "longitude": data["longitude"],
-                "exp_start": data["start"],
-                "exp_end": data["end"],
+                "exp_start": None,
+                "exp_end": None,
                 "images": images,
                 "country": country,
             }
@@ -108,30 +116,59 @@ def create_experience(user_id):
 @experience_bp.route("/<exp_id>", methods=["PATCH"])
 @validate_token
 def update_experience(user_id, exp_id):
-    data = json.loads(request.data)
 
-    # Get country from coordinates
-    country = get_country(data["latitude"], data["longitude"])
-
-    # TODO: Upload images to AWS S3 and get URLs
-
-    # Update experience
     try:
 
+        print(len("test".split(".")))
+
+        # Get data from request
+        data = json.loads(request.data)
+
+        # Get country from coordinates
+        country = get_country(data["latitude"], data["longitude"])
+
+        # Build updated image url list
+        updated_images = []
+        previous_images = experience_service.get_images(exp_id).split(",")
+
+        for image in data["images"]:
+
+            # Keep previous images
+            if image in previous_images:
+
+                updated_images.append(image)
+                previous_images.remove(image)
+
+            # Upload new images
+            else:
+
+                image_key = upload_image(image)
+                updated_images.append(image_key)
+
+        # Remove deleted images
+        for image in previous_images:
+
+            image_key = image.split("/")[-1]
+            delete_image(image_key)
+
+        # Convert image list to comma delimited string
+        images = ",".join(updated_images)
+
+        # Update experience
         experience = experience_service.update_experience(
             {
-                "user_id": user_id,
                 "exp_id": exp_id,
+                "user_id": user_id,
                 "title": data["title"],
                 "description": data["description"],
                 "keywords": data["keywords"],
                 "latitude": data["latitude"],
                 "longitude": data["longitude"],
-                "exp_start": data["exp_start"],
-                "exp_end": data["exp_end"],
+                "exp_start": None,
+                "exp_end": None,
                 "images": images,
                 "country": country,
-            }
+            },
         )
         return Response(json.dumps({"experience": experience}), status=200)
 
@@ -145,9 +182,17 @@ def update_experience(user_id, exp_id):
 @validate_token
 def delete_experience(user_id, exp_id):
 
-    # Delete experience
     try:
 
+        # Delete images
+        images = experience_service.get_images(exp_id).split(",")
+
+        for image in images:
+
+            image_key = image.split("/")[-1]
+            delete_image(image_key)
+
+        # Delete experience
         experience_service.delete_experience(user_id, exp_id)
         return Response(json.dumps({"exp_id": exp_id}), status=200)
 
