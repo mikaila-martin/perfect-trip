@@ -105,7 +105,6 @@ def create_experience(user_id):
         return Response(json.dumps({"message": str(message)}), status=400)
 
 
-
 @experience_bp.route("/<exp_id>", methods=["PATCH"])
 @validate_token
 def update_experience(user_id, exp_id):
