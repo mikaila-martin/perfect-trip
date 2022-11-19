@@ -19,18 +19,19 @@ def search_experiences(n, s, e, w, keyword_array):
     id_array = []
     exp_array = []
 
-    for exp in experiences:
-        if exp[1] in keyword_array and exp[0] not in id_array:
-            id_array.append(exp[0])
-
-    for id in id_array:
-        exp_array.append(get_experience_by_id(id))
+    try:
+        for exp in experiences:
+            if exp[1] in keyword_array and exp[0] not in id_array:
+                id_array.append(exp[0])
+        for id in id_array:
+            exp_array.append(get_experience_by_id(id))
+    except TypeError:
+        pass
 
     return exp_array
 
 
 def get_experience_by_id(exp_id):
-
     # Get experience
     experience = get_query(
         """
