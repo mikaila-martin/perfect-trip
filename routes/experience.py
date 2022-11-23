@@ -83,7 +83,6 @@ def create_experience(user_id):
 
         # Upload images to AWS S3 and build url list
         images = []
-
         for image in data["images"]:
             image_key = upload_image(image)
             images.append(image_key)
@@ -99,8 +98,6 @@ def create_experience(user_id):
                 "keywords": data["keywords"],
                 "latitude": data["latitude"],
                 "longitude": data["longitude"],
-                "exp_start": None,
-                "exp_end": None,
                 "images": images,
                 "country": country,
             }
@@ -108,9 +105,10 @@ def create_experience(user_id):
         return Response(json.dumps({"experience": experience}), status=200)
 
     # Handle exception
-    except Exception as message:
-
-        return Response(json.dumps({"message": str(message)}), status=400)
+    #except Exception as message:
+    #    return Response(json.dumps({"message": str(message)}), status=400)
+    finally:
+        pass
 
 
 @experience_bp.route("/<exp_id>", methods=["PATCH"])
@@ -164,8 +162,6 @@ def update_experience(user_id, exp_id):
                 "keywords": data["keywords"],
                 "latitude": data["latitude"],
                 "longitude": data["longitude"],
-                "exp_start": None,
-                "exp_end": None,
                 "images": images,
                 "country": country,
             },
