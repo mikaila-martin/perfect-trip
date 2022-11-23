@@ -112,13 +112,13 @@ def places_nearby(lat, lng, keywords):
 
     if len(keywords) == 0:
         urls.append(
-            f"{BASE_URL}/nearbysearch/json?key={google_places_api_key}&location={lat},{lng}&radius=50000"
+            f"{BASE_URL}/nearbysearch/json?key={google_places_api_key}&location={lat},{lng}&radius=50000&language=en"
         )
 
     else:
         for keyword in keywords:
             urls.append(
-                f"{BASE_URL}/nearbysearch/json?key={google_places_api_key}&location={lat},{lng}&radius=50000&keyword={keyword}"
+                f"{BASE_URL}/nearbysearch/json?key={google_places_api_key}&location={lat},{lng}&radius=50000&language=en&type={keyword}"
             )
 
     places = []
@@ -127,6 +127,8 @@ def places_nearby(lat, lng, keywords):
 
         response = requests.get(url)
         json_response = response.json()
+
+        print(json_response)
 
         status = json_response["status"]
         results = json_response["results"]
