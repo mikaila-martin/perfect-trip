@@ -9,8 +9,8 @@ def search_experiences(n, s, e, w, keyword_array):
         f"INNER JOIN pt_schema.experiences_keywords "
         f"ON experiences.exp_id = experiences_keywords.exp_id "
         f"WHERE "
-        f"experiences.longitude BETWEEN {s} AND {n} AND "
-        f"experiences.latitude BETWEEN {w} AND {e}"
+        f"experiences.longitude BETWEEN {w} AND {e} AND "
+        f"experiences.latitude BETWEEN {s} AND {n}"
     )
 
     if experiences is None:
@@ -21,8 +21,8 @@ def search_experiences(n, s, e, w, keyword_array):
 
     try:
         for exp in experiences:
-            if exp[1] in keyword_array and exp[0] not in id_array:
-                id_array.append(exp[0])
+            if exp["keyword"] in keyword_array and exp["exp_id"] not in id_array or keyword_array == []:
+                id_array.append(exp["exp_id"])
         for id in id_array:
             exp_array.append(get_experience_by_id(id))
     except TypeError:
@@ -37,7 +37,7 @@ def get_experience_by_id(exp_id):
         """
         SELECT experiences.exp_id, experiences.user_id, experiences.title, 
         experiences.description, experiences.latitude, experiences.longitude, 
-        experiences.exp_start, experiences.exp_end, experiences.images, 
+        experiences.images, 
         experiences.country FROM pt_schema.experiences 
         WHERE experiences.exp_id = %s
         """,
@@ -125,8 +125,8 @@ def create_experience(experience):
     send_query(
         """
         INSERT INTO pt_schema.experiences (user_id, title, description, latitude,
-        longitude, country, images, exp_start, exp_end)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        longitude, country, images)
+        VALUES (%s,%s,%s,%s,%s,%s,%s)
         """,
         (
             experience["user_id"],
@@ -136,8 +136,6 @@ def create_experience(experience):
             experience["longitude"],
             experience["country"],
             experience["images"],
-            experience["exp_start"],
-            experience["exp_end"],
         ),
     )
 
@@ -192,7 +190,7 @@ def update_experience(experience):
         """
         UPDATE pt_schema.experiences SET title = %s, description = %s, 
         latitude = %s, longitude = %s, images = %s, user_id = %s, 
-        exp_start = %s, exp_end = %s, country = %s WHERE exp_id = %s
+        country = %s WHERE exp_id = %s
         """,
         (
             experience["title"],
@@ -201,8 +199,6 @@ def update_experience(experience):
             experience["longitude"],
             experience["images"],
             experience["user_id"],
-            experience["exp_start"],
-            experience["exp_end"],
             experience["country"],
             experience["exp_id"],
         ),
