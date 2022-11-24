@@ -16,7 +16,7 @@ def get_by_id(user_id):
         raise Exception("User not found.")
 
 
-def update_username(user_id, username):
+def update_username_db(user_id, username):
     send_query("""UPDATE pt_schema.users SET username = %s
      WHERE user_id = %s;""", (username, user_id))
     return get_by_id(user_id)
@@ -36,3 +36,14 @@ def check_password(user_id, password_hash):
 
 def delete_account_db(user_id):
     send_query("""DELETE FROM pt_schema.users WHERE users.user_id = %s; """, (user_id,))
+
+
+def get_avatar_by_user(user_id):
+    avatar = get_by_id(user_id)["avatar"]
+    return avatar
+
+
+def update_avatar_db(user_id, avatar):
+    send_query("""UPDATE pt_schema.users SET avatar = %s
+         WHERE user_id = %s;""", (avatar, user_id))
+    return get_by_id(user_id)
