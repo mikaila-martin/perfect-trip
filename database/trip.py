@@ -14,6 +14,9 @@ def get_trip_ids_by_user(user_id):
         (user_id,),
     )
 
+    if ids is None:
+        return []
+
     return ids
 
 

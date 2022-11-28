@@ -6,6 +6,24 @@ import json
 trip_bp = Blueprint("trip", __name__)
 
 
+@trip_bp.route("/", methods=["GET"])
+@validate_token
+def get_user_trips(user_id):
+    try:
+
+        trip_ids = trip_entity.get_trip_ids_by_user(user_id)
+
+        trips = []
+
+        for id in trip_ids:
+            trips.append(trip_entity.get_trip(id["trip_id"]))
+
+        return json.dumps({"trips": trips})
+
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
+
+
 @trip_bp.route("/<trip_id>", methods=["GET"])
 @validate_token
 def get_itinerary(user_id, trip_id):
@@ -105,24 +123,6 @@ def delete_itinerary(user_id, trip_id):
         trip_entity.delete_trip(trip_id)
 
         return Response(json.dumps({"tripId": trip_id}), status=200)
-
-    except Exception as message:
-        return Response(json.dumps({"message": str(message)}), status=400)
-
-
-@trip_bp.route("/user/", methods=["GET"])
-@validate_token
-def get_trips_by_user(user_id):
-    try:
-
-        trip_ids = trip_entity.get_trip_ids_by_user(user_id)
-
-        trips = []
-
-        for id in trip_ids:
-            trips.append(trip_entity.get_trip(id["trip_id"]))
-
-        return json.dumps({"trips": trips})
 
     except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
