@@ -21,7 +21,11 @@ def search_experiences(n, s, e, w, keyword_array):
 
     try:
         for exp in experiences:
-            if exp["keyword"] in keyword_array and exp["exp_id"] not in id_array or keyword_array == []:
+            if (
+                exp["keyword"] in keyword_array
+                and exp["exp_id"] not in id_array
+                or keyword_array == []
+            ):
                 id_array.append(exp["exp_id"])
         for id in id_array:
             exp_array.append(get_experience_by_id(id))
@@ -32,13 +36,14 @@ def search_experiences(n, s, e, w, keyword_array):
 
 
 def get_experience_by_id(exp_id):
+
     # Get experience
     experience = get_query(
         """
         SELECT experiences.exp_id, experiences.user_id, experiences.title, 
         experiences.description, experiences.latitude, experiences.longitude, 
-        experiences.images, 
-        experiences.country FROM pt_schema.experiences 
+        experiences.images, experiences.country_name, experiences.country_code
+        FROM pt_schema.experiences 
         WHERE experiences.exp_id = %s
         """,
         (exp_id,),
@@ -125,8 +130,8 @@ def create_experience(experience):
     send_query(
         """
         INSERT INTO pt_schema.experiences (user_id, title, description, latitude,
-        longitude, country, images)
-        VALUES (%s,%s,%s,%s,%s,%s,%s)
+        longitude, country_name, country_code, images)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
         """,
         (
             experience["user_id"],
@@ -134,7 +139,8 @@ def create_experience(experience):
             experience["description"],
             experience["latitude"],
             experience["longitude"],
-            experience["country"],
+            experience["country_name"],
+            experience["country_code"],
             experience["images"],
         ),
     )
