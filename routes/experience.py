@@ -37,21 +37,8 @@ def search():
     return json.dumps({"experiences": experiences + places})
 
 
-@experience_bp.route("/<exp_id>", methods=["GET"])
-def get_experience(exp_id):
-
-    # Get experience
-    try:
-
-        experience = experience_service.get_experience_by_id(exp_id)
-        return Response(json.dumps({"experience": experience}), status=200)
-
-    # Handle exception
-    except Exception as message:
-        return Response(json.dumps({"message": str(message)}), status=400)
-
-
-@experience_bp.route("/user/<user_id>", methods=["GET"])
+@experience_bp.route("/", methods=["GET"])
+@validate_token
 def get_user_experiences(user_id):
 
     # Get experiences
@@ -64,6 +51,20 @@ def get_user_experiences(user_id):
     except TypeError:
         return Response(json.dumps({"experiences": []}), status=200)
 
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
+
+
+@experience_bp.route("/<exp_id>", methods=["GET"])
+def get_experience(exp_id):
+
+    # Get experience
+    try:
+
+        experience = experience_service.get_experience_by_id(exp_id)
+        return Response(json.dumps({"experience": experience}), status=200)
+
+    # Handle exception
     except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
 
