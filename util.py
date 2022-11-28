@@ -40,10 +40,11 @@ def get_country(latitude, longitude):
 def get_review_average(data):
     count = 0
     rev_sum = 0
-    for row in data:
-        count += 1
-        rev_sum += row["rev_rating"]
-    if count == 0:
+    try:
+        for row in data:
+            count += 1
+            rev_sum += row["rev_rating"]
+    except TypeError:
         return count
     else:
         return rev_sum/count
