@@ -25,9 +25,9 @@ def create_review(user_id):
         # Create review
         response = review_entity.create_review(
             user_id,
-            data["exp_id"],
+            data["experienceId"],
             data["rating"],
-            data["comment"],
+            data["review"],
         )
 
         return Response(json.dumps(pack_reviews(response)[0]))

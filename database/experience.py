@@ -68,7 +68,7 @@ def get_experience_by_id(exp_id):
     reviews = get_query(
         """
         SELECT reviews.review_id, reviews.rev_rating, reviews.comment, 
-        reviews.user_id, users.email, users.username FROM pt_schema.reviews 
+        reviews.user_id, users.avatar, users.username FROM pt_schema.reviews 
         INNER JOIN pt_schema.users ON users.user_id = reviews.user_id 
         WHERE users.user_id = %s
         """,

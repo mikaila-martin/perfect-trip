@@ -4,7 +4,7 @@ from database.connection import get_query, send_query
 def get_review(rev_id):
     response = get_query(
         """SELECT reviews.review_id, reviews.rev_rating, reviews.comment, 
-        reviews.user_id, users.email, users.username FROM pt_schema.reviews 
+        reviews.user_id, users.avatar, users.username FROM pt_schema.reviews 
         INNER JOIN pt_schema.users ON reviews.user_id = users.user_id 
         WHERE reviews.review_id = %s;""", (rev_id,)
     )
