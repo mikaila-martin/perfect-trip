@@ -63,8 +63,8 @@ def register():
 
     # Handle exception
     except Exception as message:
-
         return Response(json.dumps({"message": str(message)}), status=400)
+
 
 
 @auth_bp.route("/login", methods=["POST"])
