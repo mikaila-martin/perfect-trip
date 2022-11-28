@@ -30,7 +30,7 @@ def places_details(place_id):
 
         # Get location details
         city = None
-        country = None
+        country_name = None
         country_code = None
 
         for component in result["address_components"]:
@@ -38,7 +38,7 @@ def places_details(place_id):
                 if type == "locality":
                     city = component["long_name"]
                 if type == "country":
-                    country = component["long_name"]
+                    country_name = component["long_name"]
                     country_code = component["short_name"]
 
         # Get description
@@ -62,15 +62,15 @@ def places_details(place_id):
 
         # Format place object
         place = {
-            "id": result["place_id"],
+            "id": place_id,
             "title": result["name"],
             "description": description,
             "keywords": types,
             "rating": rating,
             "images": images,
             "city": city,
-            "country": country,
-            "country_code": country_code.lower(),
+            "countryName": country_name,
+            "countryCode": country_code.lower(),
             "latitude": round(result["geometry"]["location"]["lat"], 4),
             "longitude": round(result["geometry"]["location"]["lng"], 4),
         }
@@ -127,8 +127,6 @@ def places_nearby(lat, lng, keywords):
 
         response = requests.get(url)
         json_response = response.json()
-
-        print(json_response)
 
         status = json_response["status"]
         results = json_response["results"]

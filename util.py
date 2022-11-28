@@ -1,4 +1,30 @@
+from datetime import datetime
 from geopy.geocoders import Nominatim
+import country_converter as coco
+import uuid
+
+
+def get_date_string(date):
+    if date is None:
+        return None
+    else:
+        return date.strftime("%Y-%m-%d")
+
+
+def get_time_string(time):
+    if time is None:
+        return None
+    else:
+        return time.strftime("%I:%M %p")
+
+
+def is_valid_uuid(val):
+    try:
+        uuid.UUID(val)
+        return True
+    except ValueError:
+        return False
+
 
 geolocator = Nominatim(user_agent="geoapiExercises")
 
@@ -6,8 +32,9 @@ geolocator = Nominatim(user_agent="geoapiExercises")
 def get_country(latitude, longitude):
     location = geolocator.reverse(f"{latitude},{longitude}")
     address = location.raw["address"]
-    country = address.get("country", "")
-    return country
+    name = address.get("country", "")
+    code = coco.convert(names=[name], to="ISO2").lower()
+    return {"name": name, "code": code}
 
 
 def pack_reviews(data):
@@ -52,7 +79,8 @@ def pack_experience(exp_data, user_data, review_data, keyword_data):
         "latitude": float(exp_data["latitude"]),
         "longitude": float(exp_data["longitude"]),
         "images": exp_data["images"].split(","),
-        "country": exp_data["country"],
+        "countryName": exp_data["country_name"],
+        "countryCode": exp_data["country_code"],
         "creator": {
             "userId": user_data["user_id"],
             "username": user_data["username"],

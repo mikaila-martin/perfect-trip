@@ -48,7 +48,6 @@ def get_experience(exp_id):
 
     # Handle exception
     except Exception as message:
-
         return Response(json.dumps({"message": str(message)}), status=400)
 
 
@@ -64,8 +63,8 @@ def get_user_experiences(user_id):
     # Handle exception
     except TypeError:
         return Response(json.dumps({"experiences": []}), status=200)
-    except Exception as message:
 
+    except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
 
 
@@ -99,7 +98,8 @@ def create_experience(user_id):
                 "latitude": data["latitude"],
                 "longitude": data["longitude"],
                 "images": images,
-                "country": country,
+                "country_name": country["name"],
+                "country_code": country["code"],
             }
         )
         return Response(json.dumps({"experience": experience}), status=200)
@@ -114,8 +114,6 @@ def create_experience(user_id):
 def update_experience(user_id, exp_id):
 
     try:
-
-        print(len("test".split(".")))
 
         # Get data from request
         data = json.loads(request.data)
@@ -168,7 +166,6 @@ def update_experience(user_id, exp_id):
 
     # Handle exception
     except Exception as message:
-
         return Response(json.dumps({"message": str(message)}), status=400)
 
 
@@ -192,5 +189,4 @@ def delete_experience(user_id, exp_id):
 
     # Handle exception
     except Exception as message:
-
         return Response(json.dumps({"message": str(message)}), status=400)
