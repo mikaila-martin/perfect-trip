@@ -37,6 +37,18 @@ def get_country(latitude, longitude):
     return {"name": name, "code": code}
 
 
+def get_review_average(data):
+    count = 0
+    rev_sum = 0
+    for row in data:
+        count += 1
+        rev_sum += row["rev_rating"]
+    if count == 0:
+        return count
+    else:
+        return rev_sum/count
+
+
 def pack_reviews(data):
     reviews = []
 
@@ -51,7 +63,7 @@ def pack_reviews(data):
             "user": {
                 "userId": row["user_id"],
                 "username": row["username"],
-                "avatar": row["username"],
+                "avatar": row["avatar"],
             },
         }
         reviews.append(review)
@@ -70,6 +82,7 @@ def pack_keywords(data):
 
 def pack_experience(exp_data, user_data, review_data, keyword_data):
     review_list = pack_reviews(review_data)
+    average_review = get_review_average(review_data)
     keywords_list = pack_keywords(keyword_data)
     packed_experience = {
         "id": exp_data["exp_id"],
@@ -81,6 +94,7 @@ def pack_experience(exp_data, user_data, review_data, keyword_data):
         "images": exp_data["images"].split(","),
         "countryName": exp_data["country_name"],
         "countryCode": exp_data["country_code"],
+        "rating": average_review,
         "creator": {
             "userId": user_data["user_id"],
             "username": user_data["username"],
