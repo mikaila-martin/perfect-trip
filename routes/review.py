@@ -1,6 +1,7 @@
 from flask import Blueprint, request, Response
 import database.review as review_entity
 from middleware.auth import validate_token
+import database.experience as experience_entity
 from util import pack_reviews
 import json
 
@@ -10,8 +11,9 @@ review_bp = Blueprint("review", __name__)
 @review_bp.route("/<rev_id>", methods=["GET"])
 def get_a_review(rev_id):
     try:
-        response = review_entity.get_review(rev_id)
-        return Response(json.dumps(pack_reviews(response)[0]))
+        review = review_entity.get_review(rev_id)
+        response = experience_entity.get_experience_by_id(review["exp_id"])
+        return Response(json.dumps({"experience": response}))
     except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
 
@@ -21,20 +23,17 @@ def get_a_review(rev_id):
 def create_review(user_id):
     try:
         data = json.loads(request.data)
-
         # Create review
         response = review_entity.create_review(
             user_id,
             data["experienceId"],
             data["rating"],
-            data["rev"],
-        )
+            data["rev"],)
 
         return Response(json.dumps(pack_reviews(response)[0]))
-    #except Exception as message:
-    #    return Response(json.dumps({"message": str(message)}), status=400)
-    finally:
-        pass
+    except Exception as message:
+        return Response(json.dumps({"message": str(message)}), status=400)
+
 
 @review_bp.route("/<rev_id>", methods=["PATCH"])
 @validate_token
