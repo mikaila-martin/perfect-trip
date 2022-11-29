@@ -70,9 +70,9 @@ def get_experience_by_id(exp_id):
         SELECT reviews.review_id, reviews.rev_rating, reviews.comment, 
         reviews.user_id, users.avatar, users.username FROM pt_schema.reviews 
         INNER JOIN pt_schema.users ON users.user_id = reviews.user_id 
-        WHERE users.user_id = %s
+        WHERE reviews.exp_id = %s
         """,
-        (user_id,),
+        (exp_id,),
     )
 
     # Get keywords

@@ -28,7 +28,7 @@ def create_review(user_id, exp_id, stars, review_str):
     # Get review
     return get_query(
         """SELECT reviews.review_id, reviews.rev_rating, reviews.comment, 
-        reviews.user_id, users.email, users.username FROM pt_schema.reviews 
+        reviews.user_id, users.avatar, users.username FROM pt_schema.reviews 
         INNER JOIN pt_schema.users ON reviews.user_id = users.user_id 
         WHERE reviews.user_id = %s AND reviews.exp_id = %s;""", (user_id, exp_id)
     )
