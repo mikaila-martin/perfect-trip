@@ -27,13 +27,14 @@ def create_review(user_id):
             user_id,
             data["experienceId"],
             data["rating"],
-            data["review"],
+            data["rev"],
         )
 
         return Response(json.dumps(pack_reviews(response)[0]))
-    except Exception as message:
-        return Response(json.dumps({"message": str(message)}), status=400)
-
+    #except Exception as message:
+    #    return Response(json.dumps({"message": str(message)}), status=400)
+    finally:
+        pass
 
 @review_bp.route("/<rev_id>", methods=["PATCH"])
 @validate_token
