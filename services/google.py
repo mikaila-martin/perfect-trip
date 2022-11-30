@@ -41,6 +41,22 @@ def places_details(place_id):
                     country_name = component["long_name"]
                     country_code = component["short_name"]
 
+        # Get reviews
+        reviews = []
+
+        if "reviews" in result:
+            for review in result["reviews"]:
+                reviews.append(
+                    {
+                        "rating": review["rating"],
+                        "comment": review["text"],
+                        "user": {
+                            "username": review["author_name"],
+                            "avatar": review["profile_photo_url"],
+                        },
+                    }
+                )
+
         # Get description
         description = None
 
@@ -66,6 +82,7 @@ def places_details(place_id):
             "title": result["name"],
             "description": description,
             "keywords": types,
+            "reviews": reviews,
             "rating": rating,
             "images": images,
             "city": city,

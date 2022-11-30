@@ -1,9 +1,9 @@
 from flask import Blueprint, request, Response
 import database.experience as experience_service
 from middleware.auth import validate_token
-from services.google import places_nearby
+from services.google import places_nearby, places_details
 from services.aws import upload_image, delete_image
-from util import get_country
+from util import get_country, is_valid_uuid
 import json
 
 experience_bp = Blueprint("experience", __name__)
@@ -61,8 +61,15 @@ def get_experience(exp_id):
     # Get experience
     try:
 
-        experience = experience_service.get_experience_by_id(exp_id)
-        return Response(json.dumps({"experience": experience}), status=200)
+        # Get experience from database
+        if is_valid_uuid(exp_id):
+            experience = experience_service.get_experience_by_id(exp_id)
+            return Response(json.dumps({"experience": experience}), status=200)
+
+        # Get experience from google
+        else:
+            experience = places_details(exp_id)
+            return Response(json.dumps({"experience": experience}), status=200)
 
     # Handle exception
     except Exception as message:
