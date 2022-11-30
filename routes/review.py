@@ -23,14 +23,19 @@ def get_a_review(rev_id):
 def create_review(user_id):
     try:
         data = json.loads(request.data)
+
         # Create review
-        response = review_entity.create_review(
+        review_entity.create_review(
             user_id,
             data["experienceId"],
             data["rating"],
-            data["rev"],)
+            data["rev"],
+        )
 
-        return Response(json.dumps(pack_reviews(response)[0]))
+        # Get Experience
+        experience = experience_entity.get_experience_by_id(data["experienceId"])
+        return Response(json.dumps({"experience": experience}), status=200)
+
     except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
 
@@ -62,5 +67,3 @@ def delete_a_review(user_id, rev_id):
         return Response(json.dumps({"message": "Review Deleted"}), status=200)
     except Exception as message:
         return Response(json.dumps({"message": str(message)}), status=400)
-
-
